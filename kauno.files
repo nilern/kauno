@@ -2,3 +2,5 @@ LICENSE
 README.md
 build.sh
 src/main.c
+src/object.c
+src/object.h
