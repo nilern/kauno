@@ -1,6 +1,9 @@
 LICENSE
 README.md
 build.sh
+src/gc.c
+src/gc.h
 src/main.c
 src/object.c
 src/object.h
+src/state.h
