@@ -22,8 +22,7 @@ struct Heap {
 };
 
 static inline void* alloc(struct Heap* heap, ORef type);
-
-// TODO: alloc_indexed
+static inline void* alloc_indexed(struct Heap* heap, ORef type, size_t indexed_count);
 
 static inline void collect(struct State* state);
 

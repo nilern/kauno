@@ -11,6 +11,7 @@ Granule const ALIGNMENT_HOLE = {0};
 static inline bool granule_eq(Granule g1, Granule g2) { return g1.bits == g2.bits; }
 
 static inline void* alloc(struct Heap* heap, ORef tref) {
+    // TODO: Sanity checks:
     struct Type* const type = (struct Type*)obj_data(tref);
 
     // Compute alignment:
@@ -19,13 +20,45 @@ static inline void* alloc(struct Heap* heap, ORef tref) {
     // Compute obj start:
     size_t const free = (size_t)(void*)heap->free;
     size_t data_start = free - type->min_size; // TODO: overflow check
+    data_start &= ~(align - 1); // Align
+    void* const obj = (void*)data_start;
+    struct Header* const header = (struct Header*)data_start - 1; // Room for header
+
+    if ((char*)header >= heap->copied) {
+        memset((void*)header, 0, free - (size_t)header); // Zero object, also adding alignment hole if needed
+        obj_set_type(oref_from_ptr(obj), tref); // Initialize header
+
+        heap->free = (char*)header; // Bump end of free space
+
+        return obj;
+    } else {
+        return NULL; // Out of fromspace
+    }
+}
+
+static inline void* alloc_indexed(struct Heap* heap, ORef tref, size_t indexed_count) {
+    // TODO: Sanity checks:
+    struct Type* const type = (struct Type*)obj_data(tref);
+    struct Type* const elem_type = (struct Type*)obj_data(type->fields[type->fields_count - 1].type);
+
+    // Compute alignment:
+    size_t const align = type->align > alignof(struct Header) ? type->align : alignof(struct Header);
+    size_t const elem_align = elem_type->align > alignof(size_t) ? elem_type->align : alignof(size_t);
+
+    // Compute obj start:
+    size_t const free = (size_t)(void*)heap->free;
+    size_t indexed_start = free - indexed_count * elem_type->min_size; // TODO: overflow check
+    indexed_start &= ~(elem_align - 1); // Align
+    indexed_start -= sizeof(size_t); // Room for count
+    size_t data_start = indexed_start - type->min_size; // TODO: overflow check
     data_start = data_start & ~(align - 1); // Align
     void* const obj = (void*)data_start;
     struct Header* const header = (struct Header*)data_start - 1; // Room for header
 
     if ((char*)header >= heap->copied) {
-        memset(obj, 0, free - data_start); // Zero object, also adding alignment hole if needed
+        memset((void*)header, 0, free - (size_t)header); // Zero object, also adding alignment hole if needed
         obj_set_type(oref_from_ptr(obj), tref); // Initialize header
+        *(size_t*)(void*)indexed_start = indexed_count; // Initialize indexed count
 
         heap->free = (char*)header; // Bump end of free space
 
