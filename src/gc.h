@@ -21,7 +21,7 @@ struct Heap {
     char* free;
 };
 
-static inline struct Object* alloc(struct Heap* heap, ORef type);
+static inline void* alloc(struct Heap* heap, ORef type);
 
 // TODO: alloc_indexed
 

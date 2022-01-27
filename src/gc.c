@@ -10,8 +10,8 @@ Granule const ALIGNMENT_HOLE = {0};
 
 static inline bool granule_eq(Granule g1, Granule g2) { return g1.bits == g2.bits; }
 
-static inline struct Object* alloc(struct Heap* heap, ORef tref) {
-    struct Type* const type = (struct Type*)deref(tref);
+static inline void* alloc(struct Heap* heap, ORef tref) {
+    struct Type* const type = (struct Type*)obj_data(tref);
 
     // Compute alignment:
     size_t const align = type->align > alignof(struct Header) ? type->align : alignof(struct Header);
@@ -20,13 +20,14 @@ static inline struct Object* alloc(struct Heap* heap, ORef tref) {
     size_t const free = (size_t)(void*)heap->free;
     size_t data_start = free - type->min_size; // TODO: overflow check
     data_start = data_start & ~(align - 1); // Align
-    struct Object* const obj = (struct Object*)data_start - 1; // Room for header
+    void* const obj = (void*)data_start;
+    struct Header* const header = (struct Header*)data_start - 1; // Room for header
 
-    if ((char*)obj >= heap->copied) {
-        memset((void*)data_start, 0, free - data_start); // Zero object, also adding alignment hole if needed
+    if ((char*)header >= heap->copied) {
+        memset(obj, 0, free - data_start); // Zero object, also adding alignment hole if needed
         obj_set_type(oref_from_ptr(obj), tref); // Initialize header
 
-        heap->free = (char*)obj; // Bump end of free space
+        heap->free = (char*)header; // Bump end of free space
 
         return obj;
     } else {
@@ -61,7 +62,7 @@ static inline char* scan_fields(struct State* state, struct Type* type, char* da
 
             // Elements of indexed field:
             ORef const indexed_type = type->fields[lasti].type;
-            size_t const indexed_elem_size = ((struct Type*)deref(indexed_type))->min_size;
+            size_t const indexed_elem_size = ((struct Type*)obj_data(indexed_type))->min_size;
             size_t* const indexed_data = (size_t*)(data + type->fields[lasti].offset);
             size_t const indexed_count = *indexed_data;
             char* indexed_fields = (char*)(indexed_data + 1);
@@ -79,7 +80,7 @@ static inline char* scan_fields(struct State* state, struct Type* type, char* da
 
 // Returns the address immediately after the field data.
 static inline char* scan_field(struct State* state, ORef field_type, char* field) {
-    struct Type* const type = (struct Type*)deref(field_type);
+    struct Type* const type = (struct Type*)obj_data(field_type);
     if (type->inlineable) {
         // Scan inlined fields:
         return scan_fields(state, type, field);
@@ -100,8 +101,8 @@ static inline void collect(struct State* state) {
     while (scan < state->heap.copied) {
         if (!granule_eq(*(Granule*)scan, ALIGNMENT_HOLE)) {
             // Scan object:
-            ORef const oref = oref_from_ptr((struct Object*)scan);
-            obj_set_type(oref, mark(&state->heap, oref_from_ptr((struct Object*)obj_type(oref)))); // mark type
+            ORef const oref = oref_from_ptr((void*)scan);
+            obj_set_type(oref, mark(&state->heap, oref_from_ptr((void*)obj_type(oref)))); // mark type
             uintptr_t const addr = (uintptr_t)(void*)scan_fields(state, obj_type(oref), obj_data(oref)); // scan fields
             scan = (char*)(void*)((addr + alignof(Granule) - 1) & ~(alignof(Granule) - 1));
         } else {

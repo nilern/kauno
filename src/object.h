@@ -9,12 +9,8 @@ struct Header {
     uintptr_t bits;
 };
 
-struct Object {
-    struct Header header;
-};
-
 typedef struct {
-    struct Object* ptr;
+    void* ptr;
 } ORef;
 
 struct Field {
@@ -23,7 +19,6 @@ struct Field {
 };
 
 struct Type {
-    struct Object base;
     size_t align;
     size_t min_size;
     bool inlineable;
@@ -33,17 +28,19 @@ struct Type {
     struct Field fields[];
 };
 
-static inline ORef oref_from_ptr(struct Object* obj);
+static inline ORef oref_from_ptr(void* obj);
 
-static inline struct Object* deref(ORef obj);
+static inline struct Header* obj_header(ORef obj);
 
-static inline char* obj_data(ORef obj);
+static inline void* obj_data(ORef obj);
 
 static inline bool obj_is_marked(ORef obj);
 
 static inline void obj_set_marked(ORef obj);
 
 static inline struct Type* obj_type(ORef obj);
+
+static inline void obj_set_type(ORef obj, ORef type);
 
 static inline bool obj_eq(ORef obj1, ORef obj2);
 
