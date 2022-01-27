@@ -2,13 +2,37 @@
 
 #include <stddef.h>
 #include <stdalign.h>
+#include <string.h>
 
 #include "object.h"
-#include "state.h"
 
 Granule const ALIGNMENT_HOLE = {0};
 
-bool granule_eq(Granule g1, Granule g2) { return g1.bits == g2.bits; }
+static inline bool granule_eq(Granule g1, Granule g2) { return g1.bits == g2.bits; }
+
+static inline struct Object* alloc(struct Heap* heap, ORef tref) {
+    struct Type* const type = (struct Type*)deref(tref);
+
+    // Compute alignment:
+    size_t const align = type->align > alignof(struct Header) ? type->align : alignof(struct Header);
+
+    // Compute obj start:
+    size_t const free = (size_t)(void*)heap->free;
+    size_t data_start = free - type->min_size; // TODO: overflow check
+    data_start = data_start & ~(align - 1); // Align
+    struct Object* const obj = (struct Object*)data_start - 1; // Room for header
+
+    if ((char*)obj >= heap->copied) {
+        memset((void*)data_start, 0, free - data_start); // Zero object, also adding alignment hole if needed
+        obj_set_type(oref_from_ptr(obj), tref); // Initialize header
+
+        heap->free = (char*)obj; // Bump end of free space
+
+        return obj;
+    } else {
+        return NULL; // Out of fromspace
+    }
+}
 
 static inline ORef mark(struct Heap* heap, ORef obj) {
     // FIXME: copy object and set fwd ptr
@@ -71,14 +95,15 @@ static inline void collect(struct State* state) {
     // TODO: Mark roots
 
     // Copy live objects:
-    Granule* scan = state->heap.tospace.start;
+    char* scan = state->heap.tospace.start;
     state->heap.copied = state->heap.tospace.start;
     while (scan < state->heap.copied) {
-        if (!granule_eq(*scan, ALIGNMENT_HOLE)) {
+        if (!granule_eq(*(Granule*)scan, ALIGNMENT_HOLE)) {
             // Scan object:
-            ORef const obj = oref_from_ptr((struct Object*)scan);
-            uintptr_t const addr = (uintptr_t)(void*)scan_fields(state, obj_type(obj), obj_data(obj));
-            scan = (Granule*)(void*)((addr + alignof(Granule) - 1) & ~(alignof(Granule) - 1));
+            ORef const oref = oref_from_ptr((struct Object*)scan);
+            obj_set_type(oref, mark(&state->heap, oref_from_ptr((struct Object*)obj_type(oref)))); // mark type
+            uintptr_t const addr = (uintptr_t)(void*)scan_fields(state, obj_type(oref), obj_data(oref)); // scan fields
+            scan = (char*)(void*)((addr + alignof(Granule) - 1) & ~(alignof(Granule) - 1));
         } else {
             // Skip alignment hole:
             ++scan;

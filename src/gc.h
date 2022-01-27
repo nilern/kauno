@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "state.h"
+
 typedef struct {
     uintptr_t bits;
 } Granule;
@@ -15,8 +17,14 @@ struct Semispace {
 struct Heap {
     struct Semispace fromspace;
     struct Semispace tospace;
-    Granule* copied;
-    Granule* free;
+    char* copied;
+    char* free;
 };
+
+static inline struct Object* alloc(struct Heap* heap, ORef type);
+
+// TODO: alloc_indexed
+
+static inline void collect(struct State* state);
 
 #endif // GC_H
