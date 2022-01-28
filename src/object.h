@@ -47,6 +47,9 @@ static inline void obj_set_type(ORef obj, ORef type);
 static inline ORef obj_field(struct State* state, ORef obj, size_t index);
 // TODO: obj_field_indexed
 
+static inline void obj_field_set(struct State* state, ORef obj, size_t index, ORef new_val);
+// TODO: obj_field_indexed_set
+
 static inline bool obj_eq(ORef obj1, ORef obj2);
 
 #endif // OBJECT_H

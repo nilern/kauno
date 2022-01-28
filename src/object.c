@@ -42,4 +42,25 @@ static inline ORef obj_field(struct State* state, ORef obj, size_t index) {
     }
 }
 
+static inline void obj_field_set(struct State*, ORef obj, size_t index, ORef new_val) {
+    struct Type* const type = obj_type(obj);
+
+    if (index >= type->fields_count) {
+        exit(EXIT_FAILURE); // FIXME
+    }
+    struct Field const field = type->fields[index];
+
+    // TODO: Polymorphic fields:
+    if (!obj_eq(oref_from_ptr((void*)obj_type(new_val)), field.type)) {
+        exit(EXIT_FAILURE); // FIXME
+    }
+    struct Type* const field_type = (struct Type*)obj_data(field.type);
+
+    if (field_type->inlineable) {
+        memcpy((void*)((char*)obj_data(obj) + field.offset), obj_data(new_val), field_type->min_size);
+    } else {
+        *(ORef*)((char*)obj_data(obj) + field.offset) = new_val;
+    }
+}
+
 static inline bool obj_eq(ORef obj1, ORef obj2) { return obj1.ptr == obj2.ptr; }
