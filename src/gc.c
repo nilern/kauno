@@ -5,15 +5,13 @@
 #include <string.h>
 
 #include "object.h"
+#include "state.h"
 
 Granule const ALIGNMENT_HOLE = {0};
 
 static inline bool granule_eq(Granule g1, Granule g2) { return g1.bits == g2.bits; }
 
-static inline void* alloc(struct Heap* heap, ORef tref) {
-    // TODO: Sanity checks:
-    struct Type* const type = (struct Type*)obj_data(tref);
-
+static inline void* alloc(struct Heap* heap, struct Type* type) {
     // Compute alignment:
     size_t const align = type->align > alignof(struct Header) ? type->align : alignof(struct Header);
 
@@ -26,7 +24,7 @@ static inline void* alloc(struct Heap* heap, ORef tref) {
 
     if ((char*)header >= heap->copied) {
         memset((void*)header, 0, free - (size_t)header); // Zero object, also adding alignment hole if needed
-        obj_set_type(oref_from_ptr(obj), tref); // Initialize header
+        obj_set_type(oref_from_ptr(obj), oref_from_ptr(type)); // Initialize header
 
         heap->free = (char*)header; // Bump end of free space
 
@@ -36,9 +34,8 @@ static inline void* alloc(struct Heap* heap, ORef tref) {
     }
 }
 
-static inline void* alloc_indexed(struct Heap* heap, ORef tref, size_t indexed_count) {
+static inline void* alloc_indexed(struct Heap* heap, struct Type* type, size_t indexed_count) {
     // TODO: Sanity checks:
-    struct Type* const type = (struct Type*)obj_data(tref);
     struct Type* const elem_type = (struct Type*)obj_data(type->fields[type->fields_count - 1].type);
 
     // Compute alignment:
@@ -57,7 +54,7 @@ static inline void* alloc_indexed(struct Heap* heap, ORef tref, size_t indexed_c
 
     if ((char*)header >= heap->copied) {
         memset((void*)header, 0, free - (size_t)header); // Zero object, also adding alignment hole if needed
-        obj_set_type(oref_from_ptr(obj), tref); // Initialize header
+        obj_set_type(oref_from_ptr(obj), oref_from_ptr(type)); // Initialize header
         *(size_t*)(void*)indexed_start = indexed_count; // Initialize indexed count
 
         heap->free = (char*)header; // Bump end of free space
@@ -68,7 +65,7 @@ static inline void* alloc_indexed(struct Heap* heap, ORef tref, size_t indexed_c
     }
 }
 
-static inline ORef mark(struct Heap* heap, ORef obj) {
+static inline ORef mark(struct Heap*, ORef obj) {
     // FIXME: copy object and set fwd ptr
     obj_set_marked(obj);
     return obj;
@@ -129,8 +126,8 @@ static inline void collect(struct State* state) {
     // TODO: Mark roots
 
     // Copy live objects:
-    char* scan = state->heap.tospace.start;
-    state->heap.copied = state->heap.tospace.start;
+    char* scan = (char*)state->heap.tospace.start;
+    state->heap.copied = (char*)state->heap.tospace.start;
     while (scan < state->heap.copied) {
         if (!granule_eq(*(Granule*)scan, ALIGNMENT_HOLE)) {
             // Scan object:
@@ -148,5 +145,5 @@ static inline void collect(struct State* state) {
     struct Semispace tmp = state->heap.fromspace;
     state->heap.fromspace = state->heap.tospace;
     state->heap.tospace = tmp;
-    state->heap.free = state->heap.tospace.end;
+    state->heap.free = (char*)state->heap.tospace.end;
 }

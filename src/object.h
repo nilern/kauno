@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+struct State;
+
 struct Header {
     uintptr_t bits;
 };
@@ -41,6 +43,9 @@ static inline void obj_set_marked(ORef obj);
 static inline struct Type* obj_type(ORef obj);
 
 static inline void obj_set_type(ORef obj, ORef type);
+
+static inline ORef obj_field(struct State* state, ORef obj, size_t index);
+// TODO: obj_field_indexed
 
 static inline bool obj_eq(ORef obj1, ORef obj2);
 

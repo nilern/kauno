@@ -1,7 +1,6 @@
 #ifndef STATE_H
 #define STATE_H
 
-#include "object.h"
 #include "gc.h"
 
 struct State {
