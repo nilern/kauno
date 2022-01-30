@@ -8,9 +8,9 @@
 
 static inline ORef oref_from_ptr(void* obj) { return (ORef){obj}; }
 
-struct Header* obj_header(ORef obj) { return (struct Header*)obj.ptr - 1; }
+static inline struct Header* obj_header(ORef obj) { return (struct Header*)obj.ptr - 1; }
 
-void* obj_data(ORef obj) { return obj.ptr; }
+static inline void* obj_data(ORef obj) { return obj.ptr; }
 
 static inline bool obj_is_marked(ORef obj) { return obj_header(obj)->bits & 1; }
 

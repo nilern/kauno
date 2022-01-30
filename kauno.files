@@ -3,7 +3,14 @@ README.md
 build.sh
 src/gc.c
 src/gc.h
+src/lexer.c
+src/lexer.h
 src/main.c
 src/object.c
 src/object.h
+src/parser.c
+src/parser.h
+src/pos.c
+src/pos.h
+src/state.c
 src/state.h

@@ -23,6 +23,10 @@ struct Heap {
     char* free;
 };
 
+static inline struct Heap Heap_new(size_t heap_size);
+
+// FIXME: Failing allocations should trigger collection:
+
 static inline void* alloc(struct Heap* heap, struct Type* type);
 static inline void* alloc_indexed(struct Heap* heap, struct Type* type, size_t indexed_count);
 
