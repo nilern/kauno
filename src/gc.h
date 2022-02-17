@@ -24,6 +24,7 @@ struct Heap {
 };
 
 static inline struct Heap Heap_new(size_t heap_size);
+static inline void Heap_delete(struct Heap* heap);
 
 // FIXME: Failing allocations should trigger collection:
 

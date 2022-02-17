@@ -5,8 +5,6 @@
 
 #include "gc.h"
 
-#define STACK_SIZE 1024*1024
-
 struct State {
     struct Heap heap;
 
@@ -16,15 +14,20 @@ struct State {
     struct Type* Bool;
 
     ORef* sp;
-    ORef stack[STACK_SIZE / sizeof(ORef)]; // TODO: Growable ("infinite") stack
+    size_t stack_size;
+    ORef* stack; // TODO: Growable ("infinite") stack
 };
 
-static inline struct State State_new(size_t heap_size);
+static inline struct State State_new(size_t heap_size, size_t stack_size);
+
+static inline void State_delete(struct State* state);
 
 static inline void State_push(struct State* state, ORef value);
 
-static inline ORef State_pop(struct State* state);
+static inline ORef* State_peek(struct State* state);
 
-static inline void State_print_builtin(struct State const* state, FILE* dest, ORef value);
+static inline void State_pop(struct State* state);
+
+static inline void State_print_builtin(struct State const* state, FILE* dest, ORef* value);
 
 #endif // STATE_H

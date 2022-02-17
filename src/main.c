@@ -10,7 +10,8 @@
 
 int main(int argc, char* argv[]) {
     if (argc == 2) {
-        struct State state = State_new(1024*1024); // 1 MiB
+        // FIXME: Stack-allocates interpreter stack:
+        struct State state = State_new(1024*1024, 1024*1024); // 1 MiB
 
         {
             struct Lexer lexer = Lexer_new(argv[1], strlen(argv[1]));
@@ -30,9 +31,12 @@ int main(int argc, char* argv[]) {
 
         struct Lexer lexer = Lexer_new(argv[1], strlen(argv[1]));
         parse_expr(&state, &lexer);
-        ORef const expr = State_pop(&state);
+        ORef* const expr = State_peek(&state);
         State_print_builtin(&state, stdout, expr);
         puts("");
+        State_pop(&state);
+
+        State_delete(&state);
 
         return EXIT_SUCCESS;
     } else {

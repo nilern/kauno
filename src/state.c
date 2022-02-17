@@ -1,9 +1,10 @@
 #include "state.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdalign.h>
 
-static inline struct State State_new(size_t heap_size) {
+static inline struct State State_new(size_t heap_size, size_t stack_size) {
     struct Heap heap = Heap_new(heap_size);
 
 
@@ -112,36 +113,49 @@ static inline struct State State_new(size_t heap_size) {
     free(tmp_USize);
 
 
-    struct State state = {
+    ORef* const stack = (ORef*)malloc(stack_size);
+
+
+    return (struct State) {
         .heap = heap,
 
         .Type = Type,
         .Int64 = Int64,
         .USize = USize,
-        .Bool = Bool
+        .Bool = Bool,
+
+        .sp = stack,
+        .stack_size = stack_size,
+        .stack = stack
     };
-    state.sp = &state.stack[0];
-    return state;
+}
+
+static inline void State_delete(struct State* state) {
+    Heap_delete(&state->heap);
+    free(state->stack);
 }
 
 static inline void State_push(struct State* state, ORef value) {
     ORef* const sp = state->sp;
     ORef* const new_sp = sp + 1;
-    if (new_sp >= (ORef*)(state + 1)) { exit(EXIT_FAILURE); } // FIXME
+    if (new_sp >= (ORef*)((char*)state + state->stack_size)) { exit(EXIT_FAILURE); } // FIXME
     *sp = value;
     state->sp = new_sp;
 }
 
-static inline ORef State_pop(struct State* state) {
-    if (state->sp == &state->stack[0]) { exit(EXIT_FAILURE); } // FIXME
-    --state->sp;
-    ORef const res = *state->sp;
-    return res;
+static inline ORef* State_peek(struct State* state) {
+    assert(state->sp > &state->stack[0]);
+    return state->sp - 1;
 }
 
-static inline void State_print_builtin(struct State const* state, FILE* dest, ORef value) {
-    struct Type* type = obj_type(value);
-    void* data = obj_data(value);
+static inline void State_pop(struct State* state) {
+    assert(state->sp > &state->stack[0]);
+    --state->sp;
+}
+
+static inline void State_print_builtin(struct State const* state, FILE* dest, ORef* value) {
+    struct Type* type = obj_type(*value);
+    void* data = obj_data(*value);
     if (type == state->Type) {
         fputs("<Type>", dest);
     } else if (type == state->Int64) {

@@ -20,6 +20,10 @@ static inline struct Semispace Semispace_new(size_t size) {
     };
 }
 
+static inline void Semispace_delete(struct Semispace* semispace) {
+    free(semispace->start);
+}
+
 // FIXME: Convert heap_size to granules properly:
 static inline struct Heap Heap_new(size_t heap_size) {
     size_t const semi_size = heap_size / 2;
@@ -31,6 +35,11 @@ static inline struct Heap Heap_new(size_t heap_size) {
         .copied = (char*)fromspace.start,
         .free = (char*)fromspace.end
     };
+}
+
+static inline void Heap_delete(struct Heap* heap) {
+    Semispace_delete(&heap->fromspace);
+    Semispace_delete(&heap->tospace);
 }
 
 static inline void* alloc(struct Heap* heap, struct Type* type) {
