@@ -74,10 +74,7 @@ static inline void SymbolTable_rehash(struct SymbolTable* symbols) {
 
 static inline void SymbolTable_delete(struct SymbolTable* symbols) {
     for (size_t i = 0; i < symbols->capacity; ++i) {
-        struct Str* k = &symbols->names[i];
-        if (k->chars) {
-            Str_delete(k);
-        }
+        Str_delete(&symbols->names[i]);
     }
 
     free(symbols->names);
