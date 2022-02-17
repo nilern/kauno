@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "util.c"
 #include "pos.c"
 #include "object.c"
 #include "gc.c"
 #include "state.c"
 #include "lexer.c"
+#include "symbol.c"
 #include "parser.c"
 
 int main(int argc, char* argv[]) {
@@ -31,7 +33,7 @@ int main(int argc, char* argv[]) {
 
         struct Lexer lexer = Lexer_new(argv[1], strlen(argv[1]));
         parse_expr(&state, &lexer);
-        ORef* const expr = State_peek(&state);
+        Handle const expr = State_peek(&state);
         State_print_builtin(&state, stdout, expr);
         puts("");
         State_pop(&state);

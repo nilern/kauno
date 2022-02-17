@@ -14,3 +14,7 @@ src/pos.c
 src/pos.h
 src/state.c
 src/state.h
+src/symbol.c
+src/symbol.h
+src/util.c
+src/util.h

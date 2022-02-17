@@ -15,6 +15,10 @@ typedef struct {
     void* ptr;
 } ORef;
 
+typedef struct {
+    ORef* oref_ptr;
+} Handle;
+
 struct Field {
     size_t offset;
     ORef type;
@@ -32,6 +36,8 @@ struct Type {
 
 static inline ORef oref_from_ptr(void* obj);
 
+static inline ORef Handle_oref(Handle handle);
+
 static inline struct Header* obj_header(ORef obj);
 
 static inline void* obj_data(ORef obj);
@@ -44,10 +50,10 @@ static inline struct Type* obj_type(ORef obj);
 
 static inline void obj_set_type(ORef obj, ORef type);
 
-static inline ORef obj_field(struct State* state, ORef* obj, size_t index);
+static inline ORef obj_field(struct State* state, Handle obj, size_t index);
 // TODO: obj_field_indexed
 
-static inline void obj_field_set(struct State* state, ORef* obj, size_t index, ORef* new_val);
+static inline void obj_field_set(struct State* state, Handle obj, size_t index, Handle new_val);
 // TODO: obj_field_indexed_set
 
 static inline bool obj_eq(ORef obj1, ORef obj2);
