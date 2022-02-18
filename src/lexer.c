@@ -36,27 +36,48 @@ static inline struct Lexer Lexer_new(char const* chars, size_t len) {
 static inline void Lexer_look_ahead(struct Lexer* lexer) {
     while (true) {
         if (lexer->chars < lexer->end) {
-            if (isspace(*lexer->chars)) {
-                ++lexer->chars;
-                ++lexer->index;
-            } else if (isdigit(*lexer->chars)) {
+            switch (*lexer->chars) {
+            case ':': {
                 char const* const tok_chars = lexer->chars;
                 size_t const start = lexer->index;
 
                 size_t len = 1;
-                for (char const* chars = tok_chars + 1; chars < lexer->end && isdigit(*lexer->chars); chars++) {
+                for (char const* chars = tok_chars + 1; chars < lexer->end && isalnum(*chars); chars++) {
                     ++len;
                 }
 
                 lexer->first = (struct Token){
-                    .type = TOKEN_INT,
+                    .type = TOKEN_SYMBOL,
                     .chars = tok_chars,
                     .len = len,
                     .span = {start, start + len - 1}
                 };
                 return;
-            } else {
-                exit(EXIT_FAILURE); // FIXME
+            }
+
+            default:
+                if (isspace(*lexer->chars)) {
+                    ++lexer->chars;
+                    ++lexer->index;
+                } else if (isdigit(*lexer->chars)) {
+                    char const* const tok_chars = lexer->chars;
+                    size_t const start = lexer->index;
+
+                    size_t len = 1;
+                    for (char const* chars = tok_chars + 1; chars < lexer->end && isdigit(*chars); chars++) {
+                        ++len;
+                    }
+
+                    lexer->first = (struct Token){
+                        .type = TOKEN_INT,
+                        .chars = tok_chars,
+                        .len = len,
+                        .span = {start, start + len - 1}
+                    };
+                    return;
+                } else {
+                    exit(EXIT_FAILURE); // FIXME
+                }
             }
         } else {
             lexer->first = (struct Token){

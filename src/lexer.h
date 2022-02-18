@@ -7,11 +7,13 @@
 #include "pos.h"
 
 enum TokenType {
+    TOKEN_SYMBOL,
     TOKEN_INT,
     TOKEN_EOF
 };
 
 static char const* const TOKEN_NAMES[TOKEN_EOF + 1] = {
+    "SYMBOL",
     "INT",
     "EOF"
 };

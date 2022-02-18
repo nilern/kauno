@@ -8,6 +8,13 @@ static inline void parse_expr(struct State* state, struct Lexer* lexer) {
     struct Token const tok = Lexer_peek(lexer);
 
     switch (tok.type) {
+    case TOKEN_SYMBOL: {
+        Lexer_next(lexer);
+
+        Symbol_new(state, tok.chars + 1, tok.len - 1);
+        return;
+    }
+
     case TOKEN_INT: {
         // FIXME: Bignums instead of overflow bugginess:
         // TODO: Return smallest possible type:

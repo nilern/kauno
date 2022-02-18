@@ -194,6 +194,13 @@ static inline void State_print_builtin(struct State const* state, FILE* dest, Ha
     void* data = obj_data(Handle_oref(value));
     if (type == state->Type) {
         fputs("<Type>", dest);
+    } else if (type == state->Symbol) {
+        struct Symbol* symbol = (struct Symbol*)data;
+
+        fputc(':', dest);
+        for (size_t i = 0; i < symbol->name_size; ++i) {
+            fputc(symbol->name[i], dest);
+        }
     } else if (type == state->Int64) {
         fprintf(dest, "%ld", *(int64_t*)data);
     } else if (type == state->USize) {
