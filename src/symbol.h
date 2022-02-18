@@ -3,7 +3,6 @@
 
 #include <stddef.h>
 
-#include "util.h"
 #include "state.h"
 
 struct Symbol {
@@ -17,8 +16,7 @@ static inline Handle Symbol_new(struct State* state, char const* name, size_t na
 struct SymbolTable {
     size_t count;
     size_t capacity;
-    struct Str* names;
-    ORef* symbols;
+    struct Symbol** symbols;
 };
 
 static inline struct SymbolTable SymbolTable_new(void);

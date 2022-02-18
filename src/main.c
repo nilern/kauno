@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "util.c"
 #include "pos.c"
 #include "object.c"
 #include "gc.c"
