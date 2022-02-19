@@ -8,10 +8,10 @@ static inline void parse_expr(struct State* state, struct Lexer* lexer) {
     struct Token const tok = Lexer_peek(lexer);
 
     switch (tok.type) {
-    case TOKEN_SYMBOL: {
+    case TOKEN_VAR: {
         Lexer_next(lexer);
 
-        Symbol_new(state, tok.chars + 1, tok.len - 1);
+        Symbol_new(state, tok.chars, tok.len);
         return;
     }
 

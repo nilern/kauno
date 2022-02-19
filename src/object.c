@@ -23,7 +23,7 @@ static inline struct Type* obj_type(ORef obj) {
 }
 
 static inline void obj_set_type(ORef obj, ORef type) {
-    obj_header(obj)->bits |= (size_t)type.ptr;
+    obj_header(obj)->bits = (size_t)type.ptr | (obj_header(obj)->bits & 1);
 }
 
 static inline ORef obj_field(struct State* state, Handle handle, size_t index) {

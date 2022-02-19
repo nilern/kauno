@@ -8,6 +8,8 @@
 #include "lexer.c"
 #include "symbol.c"
 #include "parser.c"
+#include "globals.c"
+#include "eval.c"
 
 int main(int argc, char* argv[]) {
     if (argc == 2) {
@@ -35,6 +37,13 @@ int main(int argc, char* argv[]) {
         Handle const expr = State_peek(&state);
         State_print_builtin(&state, stdout, expr);
         puts("");
+
+        puts("\n---\n");
+
+        Handle const value = eval(&state);
+        State_print_builtin(&state, stdout, value);
+        puts("");
+
         State_pop(&state);
 
         State_delete(&state);

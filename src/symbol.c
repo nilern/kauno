@@ -55,6 +55,7 @@ static inline void SymbolTable_rehash(struct SymbolTable* symbols) {
         }
     }
 
+    symbols->capacity = new_capacity;
     free(symbols->symbols);
     symbols->symbols = new_symbols;
 }
@@ -67,34 +68,36 @@ static inline Handle Symbol_new(struct State* state, char const* name, size_t na
     struct SymbolTable* symbols = &state->symbols;
     size_t const hash = Symbol_hash(name, name_size);
 
-    size_t const max_index = symbols->capacity - 1;
-    for (size_t collisions = 0, i = hash & max_index;; ++collisions, i = (i + collisions) & max_index) {
-        struct Symbol* const isymbol = symbols->symbols[i];
+    while (true) {
+        size_t const max_index = symbols->capacity - 1;
+        for (size_t collisions = 0, i = hash & max_index;; ++collisions, i = (i + collisions) & max_index) {
+            struct Symbol* const isymbol = symbols->symbols[i];
 
-        if (!isymbol) { // Not found
-            if ((symbols->count + 1) * 2 > symbols->capacity) { // New load factor > 0.5
-                SymbolTable_rehash(symbols);
-                return Symbol_new(state, name, name_size); // `i` will be off after rehash
-            } else {
-                // Construct:
-                struct Symbol* symbol = (struct Symbol*)alloc(&state->heap, state->Symbol);
-                *symbol = (struct Symbol){
-                    .hash = hash,
-                    .name_size = name_size
-                };
-                memcpy(&symbol->name, name, name_size);
+            if (!isymbol) { // Not found
+                if ((symbols->count + 1) * 2 > symbols->capacity) { // New load factor > 0.5
+                    SymbolTable_rehash(symbols);
+                    break; // continue outer loop
+                } else {
+                    // Construct:
+                    struct Symbol* symbol = (struct Symbol*)alloc(&state->heap, state->Symbol);
+                    *symbol = (struct Symbol){
+                        .hash = hash,
+                        .name_size = name_size
+                    };
+                    memcpy(&symbol->name, name, name_size);
 
-                // Insert:
-                ++symbols->count;
-                symbols->symbols[i] = symbol;
+                    // Insert:
+                    ++symbols->count;
+                    symbols->symbols[i] = symbol;
 
-                return State_push(state, oref_from_ptr(symbol));
+                    return State_push(state, oref_from_ptr(symbol));
+                }
+            } else if (isymbol->hash == hash
+                       && isymbol->name_size == name_size
+                       && strncmp(isymbol->name, name, name_size) == 0)
+            {
+                return State_push(state, oref_from_ptr(isymbol));
             }
-        } else if (isymbol->hash == hash
-                   && isymbol->name_size == name_size
-                   && strncmp(isymbol->name, name, name_size))
-        {
-            return State_push(state, oref_from_ptr(isymbol));
         }
     }
 }

@@ -5,6 +5,7 @@
 
 #include "gc.h"
 #include "symbol.h"
+#include "globals.h"
 
 struct State {
     struct Heap heap;
@@ -15,8 +16,12 @@ struct State {
     struct Type* USize;
     struct Type* Bool;
     struct Type* Symbol;
+    struct Type* Any;
+    struct Type* Var;
 
     struct SymbolTable symbols;
+
+    struct Globals globals;
 
     ORef* sp;
     size_t stack_size;
@@ -32,6 +37,8 @@ static inline Handle State_push(struct State* state, ORef value);
 static inline Handle State_peek(struct State* state);
 
 static inline void State_pop(struct State* state);
+
+static inline void State_popn(struct State* state, size_t n);
 
 static inline void State_print_builtin(struct State const* state, FILE* dest, Handle value);
 

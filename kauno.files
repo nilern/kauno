@@ -1,8 +1,12 @@
 LICENSE
 README.md
 build.sh
+src/eval.c
+src/eval.h
 src/gc.c
 src/gc.h
+src/globals.c
+src/globals.h
 src/lexer.c
 src/lexer.h
 src/main.c

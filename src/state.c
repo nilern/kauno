@@ -142,11 +142,36 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
         .type = oref_from_ptr(UInt8)
     };
 
+    size_t const Any_fields_count = 0;
+    struct Type* Any = alloc_indexed(&heap, Type, Any_fields_count);
+    *Any = (struct Type){
+        .align = 1,
+        .min_size = 0,
+        .inlineable = false,
+        .is_bits = false,
+        .has_indexed = false,
+        .fields_count = Any_fields_count
+    };
+
+    size_t const Var_fields_count = 1;
+    struct Type* Var = alloc_indexed(&heap, Type, Var_fields_count);
+    *Var = (struct Type){
+        .align = alignof(struct Var),
+        .min_size = sizeof(struct Var),
+        .inlineable = false,
+        .is_bits = false,
+        .has_indexed = false,
+        .fields_count = Var_fields_count
+    };
+    Var->fields[0] = (struct Field){
+        .offset = offsetof(struct Var, value),
+        .type = oref_from_ptr(Any)
+    };
 
     ORef* const stack = (ORef*)malloc(stack_size);
 
 
-    return (struct State) {
+    struct State state = (struct State) {
         .heap = heap,
 
         .Type = Type,
@@ -155,18 +180,34 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
         .USize = USize,
         .Bool = Bool,
         .Symbol = Symbol,
+        .Any = Any,
+        .Var = Var,
 
         .symbols = SymbolTable_new(),
+
+        .globals = Globals_new(),
 
         .sp = stack,
         .stack_size = stack_size,
         .stack = stack
     };
+
+
+    Handle const Type_handle = State_push(&state, oref_from_ptr(Type));
+    Handle const Type_symbol = Symbol_new(&state, "Type", 4);
+    Handle const Type_var = Var_new(&state, Type_handle);
+    Globals_insert(&state.globals, (struct Symbol*)obj_data(Handle_oref(Type_symbol)),
+                   (struct Var*)obj_data(Handle_oref(Type_var)));
+    State_popn(&state, 3);
+
+
+    return state;
 }
 
 static inline void State_delete(struct State* state) {
     Heap_delete(&state->heap);
     SymbolTable_delete(&state->symbols);
+    Globals_delete(&state->globals);
     free(state->stack);
 }
 
@@ -189,6 +230,11 @@ static inline void State_pop(struct State* state) {
     --state->sp;
 }
 
+static inline void State_popn(struct State* state, size_t n) {
+    assert(state->sp - n >= &state->stack[0]);
+    state->sp -= n;
+}
+
 static inline void State_print_builtin(struct State const* state, FILE* dest, Handle value) {
     struct Type* type = obj_type(Handle_oref(value));
     void* data = obj_data(Handle_oref(value));
@@ -197,14 +243,18 @@ static inline void State_print_builtin(struct State const* state, FILE* dest, Ha
     } else if (type == state->Symbol) {
         struct Symbol* symbol = (struct Symbol*)data;
 
-        fputc(':', dest);
+        fputc('\'', dest);
         for (size_t i = 0; i < symbol->name_size; ++i) {
             fputc(symbol->name[i], dest);
         }
+    } else if (type == state->Var) {
+        fputs("<Var>", dest);
+    } else if (type == state->UInt8) {
+        fprintf(dest, "%u", *(uint8_t*)data);
     } else if (type == state->Int64) {
         fprintf(dest, "%ld", *(int64_t*)data);
     } else if (type == state->USize) {
-        fprintf(dest, "%ld", *(size_t*)data);
+        fprintf(dest, "%zu", *(size_t*)data);
     } else if (type == state->Bool) {
         fputs(*(bool*)data ? "True" : "False", dest);
     } else {
