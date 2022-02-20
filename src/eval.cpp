@@ -2,14 +2,13 @@
 
 #include <cstdlib>
 
-static inline Handle eval(State* state) {
-    Handle const expr = State_peek(state);
-    ORef const expr_oref = Handle_oref(expr);
+static inline Handle<Any> eval(State* state) {
+    Handle<Any> const expr = State_peek(state);
 
-    if (obj_type(expr_oref) == state->Symbol) {
-        Symbol* symbol = (Symbol*)obj_data(expr_oref);
+    if (expr.type() == state->Symbol) {
+        Handle<Symbol> symbol = expr.unchecked_cast<Symbol>();
 
-        Var* var = Globals_find(&state->globals, symbol);
+        Var* var = Globals_find(&state->globals, symbol.oref());
         if (var) {
             return State_push(state, var->value);
         } else {

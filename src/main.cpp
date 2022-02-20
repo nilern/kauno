@@ -2,7 +2,6 @@
 #include <cstring>
 
 #include "pos.cpp"
-#include "object.cpp"
 #include "gc.cpp"
 #include "state.cpp"
 #include "lexer.cpp"
@@ -34,13 +33,13 @@ int main(int argc, char* argv[]) {
 
         Lexer lexer = Lexer_new(argv[1], strlen(argv[1]));
         parse_expr(&state, &lexer);
-        Handle const expr = State_peek(&state);
+        Handle<Any> const expr = State_peek(&state);
         State_print_builtin(&state, stdout, expr);
         puts("");
 
         puts("\n---\n");
 
-        Handle const value = eval(&state);
+        Handle<Any> const value = eval(&state);
         State_print_builtin(&state, stdout, value);
         puts("");
 

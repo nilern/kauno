@@ -11,7 +11,7 @@ struct Symbol {
     char name[];
 };
 
-static inline Handle Symbol_new(State* state, char const* name, size_t name_size);
+static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t name_size);
 
 struct SymbolTable {
     size_t count;

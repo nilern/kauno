@@ -25,7 +25,7 @@ void* Heap::alloc(Type* type) {
 
     if ((char*)header >= copied) {
         memset((void*)header, 0, free_ - (size_t)header); // Zero object, also adding alignment hole if needed
-        obj_set_type(oref_from_ptr(obj), oref_from_ptr(type)); // Initialize header
+        ORef(obj).set_type(ORef(type)); // Initialize header
 
         free = (char*)header; // Bump end of free space
 
@@ -37,7 +37,7 @@ void* Heap::alloc(Type* type) {
 
 void* Heap::alloc_indexed(Type* type, size_t indexed_count) {
     // TODO: Sanity checks:
-    Type* const elem_type = (Type*)obj_data(type->fields[type->fields_count - 1].type);
+    Type* const elem_type = type->fields[type->fields_count - 1].type.data();
 
     // Compute alignment:
     size_t const align = type->align > alignof(Header) ? type->align : alignof(Header);
@@ -54,7 +54,7 @@ void* Heap::alloc_indexed(Type* type, size_t indexed_count) {
 
     if ((char*)header >= copied) {
         memset((void*)header, 0, free_ - (size_t)header); // Zero object, also adding alignment hole if needed
-        obj_set_type(oref_from_ptr(obj), oref_from_ptr(type)); // Initialize header
+        ORef(obj).set_type(ORef(type)); // Initialize header
         *((size_t*)(void*)indexed_start - 1) = indexed_count; // Initialize indexed count
 
         free = (char*)header; // Bump end of free space
@@ -65,13 +65,14 @@ void* Heap::alloc_indexed(Type* type, size_t indexed_count) {
     }
 }
 
-static inline ORef mark(Heap*, ORef obj) {
+template<typename T>
+static inline ORef<T> mark(Heap*, ORef<T> obj) {
     // FIXME: copy object and set fwd ptr
-    obj_set_marked(obj);
+    obj.set_marked();
     return obj;
 }
 
-static inline char* scan_field(State* state, ORef field_type, char* data);
+static inline char* scan_field(State* state, ORef<Type> field_type, char* data);
 
 // Returns the address immediately after the object data.
 static inline char* scan_fields(State* state, Type* type, char* data) {
@@ -92,7 +93,7 @@ static inline char* scan_fields(State* state, Type* type, char* data) {
 
             // Elements of indexed field:
             ORef const indexed_type = type->fields[lasti].type;
-            size_t const indexed_elem_size = ((Type*)obj_data(indexed_type))->min_size;
+            size_t const indexed_elem_size = indexed_type.data()->min_size;
             size_t* const indexed_data = (size_t*)(data + type->fields[lasti].offset);
             size_t const indexed_count = *indexed_data;
             char* indexed_fields = (char*)(indexed_data + 1);
@@ -109,14 +110,14 @@ static inline char* scan_fields(State* state, Type* type, char* data) {
 }
 
 // Returns the address immediately after the field data.
-static inline char* scan_field(State* state, ORef field_type, char* field) {
-    Type* const type = (Type*)obj_data(field_type);
+static inline char* scan_field(State* state, ORef<Type> field_type, char* field) {
+    Type* const type = field_type.data();
     if (type->inlineable) {
         // Scan inlined fields:
         return scan_fields(state, type, field);
     } else {
         // Mark field:
-        ORef* const oref = (ORef*)field;
+        ORef<Any>* const oref = (ORef<Any>*)field;
         *oref = mark(&state->heap, *oref);
         return (char*)(oref + 1);
     }
@@ -131,9 +132,9 @@ void Heap::collect(State* state) {
     while (scan < copied) {
         if (!granule_eq(*(Granule*)scan, ALIGNMENT_HOLE)) {
             // Scan object:
-            ORef const oref = oref_from_ptr((void*)scan);
-            obj_set_type(oref, mark(&state->heap, oref_from_ptr((void*)obj_type(oref)))); // mark type
-            uintptr_t const addr = (uintptr_t)(void*)scan_fields(state, obj_type(oref), (char*)obj_data(oref)); // scan fields
+            ORef<Any> const oref = ORef((Any*)scan);
+            oref.set_type(mark(&state->heap, ORef(oref.type()))); // mark type
+            uintptr_t const addr = (uintptr_t)(void*)scan_fields(state, oref.type().data(), (char*)oref.data()); // scan fields
             scan = (char*)(void*)((addr + alignof(Granule) - 1) & ~(alignof(Granule) - 1));
         } else {
             // Skip alignment hole:

@@ -5,10 +5,10 @@
 
 #include "symbol.hpp"
 
-static inline Handle Var_new(State* state, Handle value) {
-    Var* var = (Var*)state->heap.alloc(state->Var);
-    *var = (Var){.value = Handle_oref(value)};
-    return State_push(state, oref_from_ptr(var));
+static inline Handle<Var> Var_new(State* state, Handle<Any> value) {
+    Var* var = (Var*)state->heap.alloc(state->Var.data());
+    *var = (Var){.value = value.oref()};
+    return State_push(state, ORef(var));
 }
 
 static inline Globals Globals_new() {
@@ -70,21 +70,21 @@ static inline void Globals_delete(Globals* globals) {
     free(globals->values);
 }
 
-static inline Var* Globals_find(Globals const* globals, Symbol const* name) {
-    size_t const hash = name->hash;
+static inline Var* Globals_find(Globals const* globals, ORef<Symbol> name) {
+    size_t const hash = name.data()->hash;
 
     size_t const max_index = globals->capacity - 1;
     for (size_t collisions = 0, i = hash & max_index;; ++collisions, i = (i + collisions) & max_index) {
         Symbol const* const key = globals->keys[i];
 
-        if (key == name) { return globals->values[i]; }
+        if (key == name.data()) { return globals->values[i]; }
 
         if (!key) { return NULL; }
     }
 }
 
-static inline void Globals_insert(Globals* globals, Symbol const* name, Var* var) {
-    size_t const hash = name->hash;
+static inline void Globals_insert(Globals* globals, ORef<Symbol> name, ORef<Var> var) {
+    size_t const hash = name.data()->hash;
 
     while (true) {
         size_t const max_index = globals->capacity - 1;
@@ -95,8 +95,8 @@ static inline void Globals_insert(Globals* globals, Symbol const* name, Var* var
                     break; // continue outer loop
                 } else {
                     ++globals->count;
-                    globals->keys[i] = name;
-                    globals->values[i] = var;
+                    globals->keys[i] = name.data();
+                    globals->values[i] = var.data();
                     return;
                 }
             }

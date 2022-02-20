@@ -64,7 +64,7 @@ static inline void SymbolTable_delete(SymbolTable* symbols) {
     free(symbols->symbols);
 }
 
-static inline Handle Symbol_new(State* state, char const* name, size_t name_size) {
+static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t name_size) {
     SymbolTable* symbols = &state->symbols;
     size_t const hash = Symbol_hash(name, name_size);
 
@@ -79,7 +79,7 @@ static inline Handle Symbol_new(State* state, char const* name, size_t name_size
                     break; // continue outer loop
                 } else {
                     // Construct:
-                    Symbol* symbol = (Symbol*)state->heap.alloc(state->Symbol);
+                    Symbol* symbol = (Symbol*)state->heap.alloc(state->Symbol.data());
                     *symbol = (Symbol){
                         .hash = hash,
                         .name_size = name_size
@@ -90,13 +90,13 @@ static inline Handle Symbol_new(State* state, char const* name, size_t name_size
                     ++symbols->count;
                     symbols->symbols[i] = symbol;
 
-                    return State_push(state, oref_from_ptr(symbol));
+                    return State_push(state, ORef(symbol));
                 }
             } else if (isymbol->hash == hash
                        && isymbol->name_size == name_size
                        && strncmp(isymbol->name, name, name_size) == 0)
             {
-                return State_push(state, oref_from_ptr(isymbol));
+                return State_push(state, ORef(isymbol));
             }
         }
     }

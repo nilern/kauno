@@ -16,7 +16,7 @@ class Heap {
         Granule* start;
         Granule* end;
 
-        Semispace(size_t size) {
+        explicit Semispace(size_t size) {
             char* const mem = new char[size];
             start = (Granule*)mem;
             end = (Granule*)(mem + size);
@@ -48,7 +48,7 @@ class Heap {
 
 public:
     // FIXME: Convert heap_size to granules properly:
-    Heap(size_t heap_size) : fromspace(heap_size / 2), tospace(heap_size / 2) {
+    explicit Heap(size_t heap_size) : fromspace(heap_size / 2), tospace(heap_size / 2) {
         copied = (char*)fromspace.start;
         free = (char*)fromspace.end;
     }

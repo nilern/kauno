@@ -43,31 +43,31 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
     };
     tmp_Type->fields[0] = (Field){
         .offset = offsetof(Type, align),
-        .type = oref_from_ptr(tmp_USize)
+        .type = ORef(tmp_USize)
     };
     tmp_Type->fields[1] = (Field){
         .offset = offsetof(Type, min_size),
-        .type = oref_from_ptr(tmp_USize)
+        .type = ORef(tmp_USize)
     };
     tmp_Type->fields[2] = (Field){
         .offset = offsetof(Type, inlineable),
-        .type = oref_from_ptr(tmp_Bool)
+        .type = ORef(tmp_Bool)
     };
     tmp_Type->fields[3] = (Field){
         .offset = offsetof(Type, is_bits),
-        .type = oref_from_ptr(tmp_Bool)
+        .type = ORef(tmp_Bool)
     };
     tmp_Type->fields[4] = (Field){
         .offset = offsetof(Type, has_indexed),
-        .type = oref_from_ptr(tmp_Bool)
+        .type = ORef(tmp_Bool)
     };
     tmp_Type->fields[5] = (Field){
         .offset = offsetof(Type, fields_count),
-        .type = oref_from_ptr(tmp_USize)
+        .type = ORef(tmp_USize)
     };
 
     struct Type* Type = (struct Type*)heap.alloc_indexed(tmp_Type, Type_fields_count);
-    obj_set_type(oref_from_ptr(Type), oref_from_ptr(Type));
+    ORef(Type).set_type(ORef(Type));
     memcpy(Type, tmp_Type, Type_size);
 
 
@@ -102,12 +102,12 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
     };
 
 
-    Type->fields[0].type = oref_from_ptr(USize);
-    Type->fields[1].type = oref_from_ptr(USize);
-    Type->fields[2].type = oref_from_ptr(Bool);
-    Type->fields[3].type = oref_from_ptr(Bool);
-    Type->fields[4].type = oref_from_ptr(Bool);
-    Type->fields[5].type = oref_from_ptr(USize);
+    Type->fields[0].type = ORef(USize);
+    Type->fields[1].type = ORef(USize);
+    Type->fields[2].type = ORef(Bool);
+    Type->fields[3].type = ORef(Bool);
+    Type->fields[4].type = ORef(Bool);
+    Type->fields[5].type = ORef(USize);
 
 
     free(tmp_USize);
@@ -137,11 +137,11 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
     };
     Symbol->fields[0] = (struct Field){
         .offset = offsetof(struct Symbol, hash),
-        .type = oref_from_ptr(USize)
+        .type = ORef(USize)
     };
     Symbol->fields[1] = (struct Field){
         .offset = offsetof(struct Symbol, name_size),
-        .type = oref_from_ptr(UInt8)
+        .type = ORef(UInt8)
     };
 
     size_t const Any_fields_count = 0;
@@ -167,23 +167,23 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
     };
     Var->fields[0] = (struct Field){
         .offset = offsetof(struct Var, value),
-        .type = oref_from_ptr(Any)
+        .type = ORef(Any)
     };
 
-    ORef* const stack = (ORef*)malloc(stack_size);
+    ORef<struct Any>* const stack = (ORef<struct Any>*)malloc(stack_size);
 
 
     State state = (State) {
         .heap = std::move(heap),
 
-        .Type = Type,
-        .UInt8 = UInt8,
-        .Int64 = Int64,
-        .USize = USize,
-        .Bool = Bool,
-        .Symbol = Symbol,
-        .Any = Any,
-        .Var = Var,
+        .Type = ORef(Type),
+        .UInt8 = ORef(UInt8),
+        .Int64 = ORef(Int64),
+        .USize = ORef(USize),
+        .Bool = ORef(Bool),
+        .Symbol = ORef(Symbol),
+        .Any = ORef(Any),
+        .Var = ORef(Var),
 
         .symbols = SymbolTable_new(),
 
@@ -195,11 +195,10 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
     };
 
 
-    Handle const Type_handle = State_push(&state, oref_from_ptr(Type));
-    Handle const Type_symbol = Symbol_new(&state, "Type", 4);
-    Handle const Type_var = Var_new(&state, Type_handle);
-    Globals_insert(&state.globals, (struct Symbol*)obj_data(Handle_oref(Type_symbol)),
-                   (struct Var*)obj_data(Handle_oref(Type_var)));
+    Handle<struct Type> const Type_handle = State_push(&state, ORef(Type));
+    Handle<struct Symbol> const Type_symbol = Symbol_new(&state, "Type", 4);
+    Handle<struct Var> const Type_var = Var_new(&state, Type_handle.as_any());
+    Globals_insert(&state.globals, Type_symbol.oref(), Type_var.oref());
     State_popn(&state, 3);
 
 
@@ -212,18 +211,9 @@ static inline void State_delete(State* state) {
     free(state->stack);
 }
 
-static inline Handle State_push(State* state, ORef value) {
-    ORef* const sp = state->sp;
-    ORef* const new_sp = sp + 1;
-    if (new_sp >= (ORef*)((char*)state + state->stack_size)) { exit(EXIT_FAILURE); } // FIXME
-    *sp = value;
-    state->sp = new_sp;
-    return (Handle){sp};
-}
-
-static inline Handle State_peek(State* state) {
+static inline Handle<Any> State_peek(State* state) {
     assert(state->sp > &state->stack[0]);
-    return (Handle){state->sp - 1};
+    return Handle(state->sp - 1);
 }
 
 static inline void State_pop(State* state) {
@@ -236,9 +226,9 @@ static inline void State_popn(State* state, size_t n) {
     state->sp -= n;
 }
 
-static inline void State_print_builtin(State const* state, FILE* dest, Handle value) {
-    Type* type = obj_type(Handle_oref(value));
-    void* data = obj_data(Handle_oref(value));
+static inline void State_print_builtin(State const* state, FILE* dest, Handle<Any> value) {
+    ORef<Type> type = value.type();
+    void* data = value.data();
     if (type == state->Type) {
         fputs("<Type>", dest);
     } else if (type == state->Symbol) {

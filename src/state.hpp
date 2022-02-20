@@ -10,36 +10,95 @@
 struct State {
     Heap heap;
 
-    struct Type* Type;
-    struct Type* UInt8;
-    struct Type* Int64;
-    struct Type* USize;
-    struct Type* Bool;
-    struct Type* Symbol;
-    struct Type* Any;
-   struct  Type* Var;
+    ORef<struct Type> Type;
+    ORef<struct Type> UInt8;
+    ORef<struct Type> Int64;
+    ORef<struct Type> USize;
+    ORef<struct Type> Bool;
+    ORef<struct Type> Symbol;
+    ORef<struct Type> Any;
+    ORef<struct Type> Var;
 
     SymbolTable symbols;
 
     Globals globals;
 
-    ORef* sp;
+    ORef<struct Any>* sp;
     size_t stack_size;
-    ORef* stack; // TODO: Growable ("infinite") stack
+    ORef<struct Any>* stack; // TODO: Growable ("infinite") stack
 };
 
 static inline State State_new(size_t heap_size, size_t stack_size);
 
 static inline void State_delete(State* state);
 
-static inline Handle State_push(State* state, ORef value);
+template<typename T>
+static inline Handle<T> State_push(State* state, ORef<T> value) {
+    ORef<Any>* const sp = state->sp;
+    ORef<Any>* const new_sp = sp + 1;
+    if (new_sp >= (ORef<Any>*)((char*)state + state->stack_size)) { exit(EXIT_FAILURE); } // FIXME
+    *sp = value.as_any();
+    state->sp = new_sp;
+    return Handle(sp).unchecked_cast<T>();
+}
 
-static inline Handle State_peek(State* state);
+static inline Handle<Any> State_peek(State* state);
 
 static inline void State_pop(State* state);
 
 static inline void State_popn(State* state, size_t n);
 
-static inline void State_print_builtin(State const* state, FILE* dest, Handle value);
+static inline void State_print_builtin(State const* state, FILE* dest, Handle<Any> value);
+
+template<typename T, typename F>
+ORef<F> obj_field(State* state, Handle<T> handle, size_t index) {
+    ORef const obj = Handle_oref(handle);
+
+    Type* const type = obj_type(obj);
+
+    if (index >= type->fields_count) {
+        exit(EXIT_FAILURE); // FIXME
+    }
+    Field const field = type->fields[index];
+    Type* const field_type = field.type.data();
+
+    if (field_type->inlineable) {
+        F* const field_obj = state->heap.alloc(field_type);
+        obj = Handle_oref(handle); // Reload after potential collection
+        Type* const field_type = (Type*)obj_data(obj_type(obj)->fields[index].type);
+        memcpy(field_obj, (void*)((char*)obj_data(obj) + field.offset), field_type->min_size);
+        return ORef(field_obj);
+    } else {
+        return *(ORef<F>*)((char*)obj_data(obj) + field.offset);
+    }
+}
+// TODO: field_indexed
+
+template<typename T, typename F>
+static inline void obj_field_set(State*, Handle<T> handle, size_t index, Handle<F> new_val_handle) {
+    ORef const obj = Handle_oref(handle);
+
+    Type* const type = obj_type(obj);
+
+    if (index >= type->fields_count) {
+        exit(EXIT_FAILURE); // FIXME
+    }
+    Field const field = type->fields[index];
+
+    ORef const new_val = Handle_oref(new_val_handle);
+
+    // TODO: Polymorphic fields:
+    if (!obj_eq(new_val.type(), field.type)) {
+        exit(EXIT_FAILURE); // FIXME
+    }
+    Type* const field_type = field.type.data();
+
+    if (field_type->inlineable) {
+        memcpy((void*)((char*)obj.data() + field.offset), obj_data(new_val), field_type->min_size);
+    } else {
+        *(ORef<F>*)((char*)obj.data() + field.offset) = new_val;
+    }
+}
+// TODO: obj_field_indexed_set
 
 #endif // STATE_H

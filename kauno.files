@@ -10,7 +10,6 @@ src/globals.hpp
 src/lexer.cpp
 src/lexer.hpp
 src/main.cpp
-src/object.cpp
 src/object.hpp
 src/parser.cpp
 src/parser.hpp
