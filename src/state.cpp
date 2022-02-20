@@ -69,10 +69,6 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
     obj_set_type(oref_from_ptr(Type), oref_from_ptr(Type));
     memcpy(Type, tmp_Type, Type_size);
 
-    free(tmp_USize);
-    free(tmp_Bool);
-    free(tmp_Type);
-
 
     struct Type* Int64 = (struct Type*)alloc_indexed(&heap, Type, 0);
     *Int64 = (struct Type){
@@ -111,6 +107,11 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
     Type->fields[3].type = oref_from_ptr(Bool);
     Type->fields[4].type = oref_from_ptr(Bool);
     Type->fields[5].type = oref_from_ptr(USize);
+
+
+    free(tmp_USize);
+    free(tmp_Bool);
+    free(tmp_Type);
 
 
     struct Type* UInt8 = (struct Type*)alloc_indexed(&heap, Type, 0);
