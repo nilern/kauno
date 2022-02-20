@@ -1,9 +1,8 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 
 struct State;
 

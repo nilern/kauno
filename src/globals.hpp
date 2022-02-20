@@ -1,9 +1,9 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#include <stddef.h>
+#include <cstddef>
 
-#include "object.h"
+#include "object.hpp"
 
 struct Var {
     ORef value;

@@ -1,8 +1,8 @@
 #ifndef POS_H
 #define POS_H
 
-#include <stddef.h>
-#include <stdio.h>
+#include <cstddef>
+#include <cstdio>
 
 struct Span {
     size_t start;

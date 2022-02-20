@@ -1,6 +1,6 @@
-#include "eval.h"
+#include "eval.hpp"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 static inline Handle eval(struct State* state) {
     Handle const expr = State_peek(state);

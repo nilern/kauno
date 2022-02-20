@@ -1,11 +1,11 @@
 #ifndef STATE_H
 #define STATE_H
 
-#include <stdio.h>
+#include <cstdio>
 
-#include "gc.h"
-#include "symbol.h"
-#include "globals.h"
+#include "gc.hpp"
+#include "symbol.hpp"
+#include "globals.hpp"
 
 struct State {
     struct Heap heap;

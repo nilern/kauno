@@ -1,9 +1,9 @@
 #ifndef SYMBOL_H
 #define SYMBOL_H
 
-#include <stddef.h>
+#include <cstddef>
 
-#include "state.h"
+#include "state.hpp"
 
 struct Symbol {
     size_t hash;

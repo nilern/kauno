@@ -1,10 +1,10 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include <stddef.h>
-#include <stdio.h>
+#include <cstddef>
+#include <cstdio>
 
-#include "pos.h"
+#include "pos.hpp"
 
 enum TokenType {
     TOKEN_VAR,

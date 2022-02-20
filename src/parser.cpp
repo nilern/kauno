@@ -1,8 +1,8 @@
-#include "parser.h"
+#include "parser.hpp"
 
-#include <stdlib.h>
+#include <cstdlib>
 
-#include "state.h"
+#include "state.hpp"
 
 static inline void parse_expr(struct State* state, struct Lexer* lexer) {
     struct Token const tok = Lexer_peek(lexer);

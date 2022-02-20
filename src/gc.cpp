@@ -1,19 +1,19 @@
-#include "gc.h"
+#include "gc.hpp"
 
-#include <stddef.h>
-#include <stdalign.h>
-#include <string.h>
-#include <stdlib.h>
+#include <cstddef>
+#include <cstdalign>
+#include <cstring>
+#include <cstdlib>
 
-#include "object.h"
-#include "state.h"
+#include "object.hpp"
+#include "state.hpp"
 
 Granule const ALIGNMENT_HOLE = {0};
 
 static inline bool granule_eq(Granule g1, Granule g2) { return g1.bits == g2.bits; }
 
 static inline struct Semispace Semispace_new(size_t size) {
-    char* const mem = malloc(size);
+    char* const mem = (char*)malloc(size);
     return (struct Semispace){
         .start = (Granule*)mem,
         .end = (Granule*)(mem + size)
@@ -163,7 +163,7 @@ static inline void collect(struct State* state) {
             // Scan object:
             ORef const oref = oref_from_ptr((void*)scan);
             obj_set_type(oref, mark(&state->heap, oref_from_ptr((void*)obj_type(oref)))); // mark type
-            uintptr_t const addr = (uintptr_t)(void*)scan_fields(state, obj_type(oref), obj_data(oref)); // scan fields
+            uintptr_t const addr = (uintptr_t)(void*)scan_fields(state, obj_type(oref), (char*)obj_data(oref)); // scan fields
             scan = (char*)(void*)((addr + alignof(Granule) - 1) & ~(alignof(Granule) - 1));
         } else {
             // Skip alignment hole:

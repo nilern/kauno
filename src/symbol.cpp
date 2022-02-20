@@ -1,7 +1,7 @@
-#include "symbol.h"
+#include "symbol.hpp"
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
 #if __WORDSIZE == 64
 size_t const FNV_PRIME = 1099511628211u;

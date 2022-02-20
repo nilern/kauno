@@ -1,9 +1,9 @@
-#include "globals.h"
+#include "globals.hpp"
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
-#include "symbol.h"
+#include "symbol.hpp"
 
 static inline Handle Var_new(struct State* state, Handle value) {
     struct Var* var = (struct Var*)alloc(&state->heap, state->Var);

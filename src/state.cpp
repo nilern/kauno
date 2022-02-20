@@ -1,15 +1,15 @@
-#include "state.h"
+#include "state.hpp"
 
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdalign.h>
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <cstdalign>
 
 static inline struct State State_new(size_t heap_size, size_t stack_size) {
     struct Heap heap = Heap_new(heap_size);
 
 
-    struct Type* tmp_USize = malloc(sizeof(struct Type));
+    struct Type* tmp_USize = (struct Type*)malloc(sizeof(struct Type));
     *tmp_USize = (struct Type){
         .align = alignof(size_t),
         .min_size = sizeof(size_t),
@@ -19,7 +19,7 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
         .fields_count = 0
     };
 
-    struct Type* tmp_Bool = malloc(sizeof(struct Type));
+    struct Type* tmp_Bool = (struct Type*)malloc(sizeof(struct Type));
     *tmp_Bool = (struct Type){
         .align = alignof(bool),
         .min_size = sizeof(bool),
@@ -31,7 +31,7 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
 
     size_t const Type_fields_count = 6;
     size_t const Type_size = sizeof(struct Type) + Type_fields_count*sizeof(struct Field);
-    struct Type* tmp_Type = malloc(Type_size);
+    struct Type* tmp_Type = (struct Type*)malloc(Type_size);
     *tmp_Type = (struct Type){
             .align = alignof(struct Type),
             .min_size = sizeof(struct Type),
@@ -65,12 +65,16 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
         .type = oref_from_ptr(tmp_USize)
     };
 
-    struct Type* Type = alloc_indexed(&heap, tmp_Type, Type_fields_count);
+    struct Type* Type = (struct Type*)alloc_indexed(&heap, tmp_Type, Type_fields_count);
     obj_set_type(oref_from_ptr(Type), oref_from_ptr(Type));
     memcpy(Type, tmp_Type, Type_size);
 
+    free(tmp_USize);
+    free(tmp_Bool);
+    free(tmp_Type);
 
-    struct Type* Int64 = alloc_indexed(&heap, Type, 0);
+
+    struct Type* Int64 = (struct Type*)alloc_indexed(&heap, Type, 0);
     *Int64 = (struct Type){
         .align = alignof(int64_t),
         .min_size = sizeof(int64_t),
@@ -80,7 +84,7 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
         .fields_count = 0
     };
 
-    struct Type* USize = alloc_indexed(&heap, Type, 0);
+    struct Type* USize = (struct Type*)alloc_indexed(&heap, Type, 0);
     *USize = (struct Type){
         .align = alignof(size_t),
         .min_size = sizeof(size_t),
@@ -90,7 +94,7 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
         .fields_count = 0
     };
 
-    struct Type* Bool = alloc_indexed(&heap, Type, 0);
+    struct Type* Bool = (struct Type*)alloc_indexed(&heap, Type, 0);
     *Bool = (struct Type){
         .align = alignof(bool),
         .min_size = sizeof(bool),
@@ -109,11 +113,7 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
     Type->fields[5].type = oref_from_ptr(USize);
 
 
-    free(tmp_Type);
-    free(tmp_Bool);
-    free(tmp_USize);
-
-    struct Type* UInt8 = alloc_indexed(&heap, Type, 0);
+    struct Type* UInt8 = (struct Type*)alloc_indexed(&heap, Type, 0);
     *USize = (struct Type){
         .align = alignof(uint8_t),
         .min_size = sizeof(uint8_t),
@@ -124,7 +124,7 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
     };
 
     size_t const Symbol_fields_count = 2;
-    struct Type* Symbol = alloc_indexed(&heap, Type, Symbol_fields_count);
+    struct Type* Symbol = (struct Type*)alloc_indexed(&heap, Type, Symbol_fields_count);
     *Symbol = (struct Type){
         .align = alignof(struct Symbol),
         .min_size = sizeof(struct Symbol),
@@ -143,7 +143,7 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
     };
 
     size_t const Any_fields_count = 0;
-    struct Type* Any = alloc_indexed(&heap, Type, Any_fields_count);
+    struct Type* Any = (struct Type*)alloc_indexed(&heap, Type, Any_fields_count);
     *Any = (struct Type){
         .align = 1,
         .min_size = 0,
@@ -154,7 +154,7 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
     };
 
     size_t const Var_fields_count = 1;
-    struct Type* Var = alloc_indexed(&heap, Type, Var_fields_count);
+    struct Type* Var = (struct Type*)alloc_indexed(&heap, Type, Var_fields_count);
     *Var = (struct Type){
         .align = alignof(struct Var),
         .min_size = sizeof(struct Var),

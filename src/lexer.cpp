@@ -1,8 +1,7 @@
-#include "lexer.h"
+#include "lexer.hpp"
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <stdbool.h>
+#include <cstdlib>
+#include <cctype>
 
 static inline void Token_print(FILE* dest, struct Token tok) {
     fprintf(dest, "<%s \"", TOKEN_NAMES[tok.type]);

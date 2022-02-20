@@ -1,9 +1,9 @@
 #ifndef GC_H
 #define GC_H
 
-#include <stdint.h>
+#include <cstdint>
 
-#include "object.h"
+#include "object.hpp"
 
 struct State;
 

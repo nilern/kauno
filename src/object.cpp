@@ -1,10 +1,10 @@
-#include "object.h"
+#include "object.hpp"
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 
-#include "gc.h"
-#include "state.h"
+#include "gc.hpp"
+#include "state.hpp"
 
 static inline ORef oref_from_ptr(void* obj) { return (ORef){obj}; }
 

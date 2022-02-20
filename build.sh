@@ -1,3 +1,3 @@
 #! /bin/sh
 
-cc -std=c17 -Wall -Wextra -Werror -g src/main.c -o kauno
+c++ -std=c++17 -Wall -Wextra -Werror -g src/main.cpp -o kauno

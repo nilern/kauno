@@ -1,15 +1,15 @@
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 
-#include "pos.c"
-#include "object.c"
-#include "gc.c"
-#include "state.c"
-#include "lexer.c"
-#include "symbol.c"
-#include "parser.c"
-#include "globals.c"
-#include "eval.c"
+#include "pos.cpp"
+#include "object.cpp"
+#include "gc.cpp"
+#include "state.cpp"
+#include "lexer.cpp"
+#include "symbol.cpp"
+#include "parser.cpp"
+#include "globals.cpp"
+#include "eval.cpp"
 
 int main(int argc, char* argv[]) {
     if (argc == 2) {
