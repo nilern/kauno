@@ -38,7 +38,7 @@ static inline ORef obj_field(State* state, Handle handle, size_t index) {
     Type* const field_type = (Type*)obj_data(field.type);
 
     if (field_type->inlineable) {
-        void* const field_obj = alloc(&state->heap, field_type);
+        void* const field_obj = state->heap.alloc(field_type);
         Type* const field_type = (Type*)obj_data(obj_type(obj)->fields[index].type);
         memcpy(field_obj, (void*)((char*)obj_data(obj) + field.offset), field_type->min_size);
         return oref_from_ptr(field_obj);

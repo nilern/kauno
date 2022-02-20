@@ -26,7 +26,7 @@ static inline void parse_expr(State* state, Lexer* lexer) {
             n = 10*n + (tok.chars[i] - '0');
         }
 
-        int64_t* data = (int64_t*)alloc(&state->heap, state->Int64);
+        int64_t* data = (int64_t*)state->heap.alloc(state->Int64);
         *data = n;
         State_push(state, oref_from_ptr(data));
         return;

@@ -79,7 +79,7 @@ static inline Handle Symbol_new(State* state, char const* name, size_t name_size
                     break; // continue outer loop
                 } else {
                     // Construct:
-                    Symbol* symbol = (Symbol*)alloc(&state->heap, state->Symbol);
+                    Symbol* symbol = (Symbol*)state->heap.alloc(state->Symbol);
                     *symbol = (Symbol){
                         .hash = hash,
                         .name_size = name_size

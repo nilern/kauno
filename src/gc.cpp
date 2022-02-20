@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <cstdalign>
 #include <cstring>
-#include <cstdlib>
+#include <algorithm>
 
 #include "object.hpp"
 #include "state.hpp"
@@ -12,52 +12,22 @@ Granule const ALIGNMENT_HOLE = {0};
 
 static inline bool granule_eq(Granule g1, Granule g2) { return g1.bits == g2.bits; }
 
-static inline Semispace Semispace_new(size_t size) {
-    char* const mem = (char*)malloc(size);
-    return (Semispace){
-        .start = (Granule*)mem,
-        .end = (Granule*)(mem + size)
-    };
-}
-
-static inline void Semispace_delete(Semispace* semispace) {
-    free(semispace->start);
-}
-
-// FIXME: Convert heap_size to granules properly:
-static inline Heap Heap_new(size_t heap_size) {
-    size_t const semi_size = heap_size / 2;
-    Semispace const fromspace = Semispace_new(semi_size);
-    Semispace const tospace = Semispace_new(semi_size);
-    return (Heap){
-        .fromspace = fromspace,
-        .tospace = tospace,
-        .copied = (char*)fromspace.start,
-        .free = (char*)fromspace.end
-    };
-}
-
-static inline void Heap_delete(Heap* heap) {
-    Semispace_delete(&heap->fromspace);
-    Semispace_delete(&heap->tospace);
-}
-
-static inline void* alloc(Heap* heap, Type* type) {
+void* Heap::alloc(Type* type) {
     // Compute alignment:
     size_t const align = type->align > alignof(Header) ? type->align : alignof(Header);
 
     // Compute obj start:
-    size_t const free = (size_t)(void*)heap->free;
-    size_t data_start = free - type->min_size; // TODO: overflow check
+    size_t const free_ = (size_t)(void*)free;
+    size_t data_start = free_ - type->min_size; // TODO: overflow check
     data_start &= ~(align - 1); // Align
     void* const obj = (void*)data_start;
     Header* const header = (Header*)data_start - 1; // Room for header
 
-    if ((char*)header >= heap->copied) {
-        memset((void*)header, 0, free - (size_t)header); // Zero object, also adding alignment hole if needed
+    if ((char*)header >= copied) {
+        memset((void*)header, 0, free_ - (size_t)header); // Zero object, also adding alignment hole if needed
         obj_set_type(oref_from_ptr(obj), oref_from_ptr(type)); // Initialize header
 
-        heap->free = (char*)header; // Bump end of free space
+        free = (char*)header; // Bump end of free space
 
         return obj;
     } else {
@@ -65,7 +35,7 @@ static inline void* alloc(Heap* heap, Type* type) {
     }
 }
 
-static inline void* alloc_indexed(Heap* heap, Type* type, size_t indexed_count) {
+void* Heap::alloc_indexed(Type* type, size_t indexed_count) {
     // TODO: Sanity checks:
     Type* const elem_type = (Type*)obj_data(type->fields[type->fields_count - 1].type);
 
@@ -74,20 +44,20 @@ static inline void* alloc_indexed(Heap* heap, Type* type, size_t indexed_count) 
     size_t const elem_align = elem_type->align > alignof(size_t) ? elem_type->align : alignof(size_t);
 
     // Compute obj start:
-    size_t const free = (size_t)(void*)heap->free;
-    size_t indexed_start = free - indexed_count * elem_type->min_size; // TODO: overflow check
+    size_t const free_ = (size_t)(void*)free;
+    size_t indexed_start = free_ - indexed_count * elem_type->min_size; // TODO: overflow check
     indexed_start &= ~(elem_align - 1); // Align
     size_t data_start = indexed_start - type->min_size; // TODO: overflow check
     data_start = data_start & ~(align - 1); // Align
     void* const obj = (void*)data_start;
     Header* const header = (Header*)data_start - 1; // Room for header
 
-    if ((char*)header >= heap->copied) {
-        memset((void*)header, 0, free - (size_t)header); // Zero object, also adding alignment hole if needed
+    if ((char*)header >= copied) {
+        memset((void*)header, 0, free_ - (size_t)header); // Zero object, also adding alignment hole if needed
         obj_set_type(oref_from_ptr(obj), oref_from_ptr(type)); // Initialize header
         *((size_t*)(void*)indexed_start - 1) = indexed_count; // Initialize indexed count
 
-        heap->free = (char*)header; // Bump end of free space
+        free = (char*)header; // Bump end of free space
 
         return obj;
     } else {
@@ -152,13 +122,13 @@ static inline char* scan_field(State* state, ORef field_type, char* field) {
     }
 }
 
-static inline void collect(State* state) {
+void Heap::collect(State* state) {
     // TODO: Mark roots
 
     // Copy live objects:
-    char* scan = (char*)state->heap.tospace.start;
-    state->heap.copied = (char*)state->heap.tospace.start;
-    while (scan < state->heap.copied) {
+    char* scan = (char*)tospace.start;
+    copied = (char*)tospace.start;
+    while (scan < copied) {
         if (!granule_eq(*(Granule*)scan, ALIGNMENT_HOLE)) {
             // Scan object:
             ORef const oref = oref_from_ptr((void*)scan);
@@ -172,8 +142,6 @@ static inline void collect(State* state) {
     }
 
     // Swap semispaces:
-    Semispace tmp = state->heap.fromspace;
-    state->heap.fromspace = state->heap.tospace;
-    state->heap.tospace = tmp;
-    state->heap.free = (char*)state->heap.fromspace.end;
+    std::swap(fromspace, tospace);
+    free = (char*)fromspace.end;
 }
