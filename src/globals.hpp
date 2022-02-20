@@ -9,21 +9,21 @@ struct Var {
     ORef value;
 };
 
-static inline Handle Var_new(struct State* state, Handle value);
+static inline Handle Var_new(State* state, Handle value);
 
 struct Globals {
     size_t count;
     size_t capacity;
-    struct Symbol const** keys;
-    struct Var** values;
+    Symbol const** keys;
+    Var** values;
 };
 
-static inline struct Globals Globals_new();
+static inline Globals Globals_new();
 
-static inline void Globals_delete(struct Globals* globals);
+static inline void Globals_delete(Globals* globals);
 
-static inline struct Var* Globals_find(struct Globals const* globals, struct Symbol const* name);
+static inline Var* Globals_find(Globals const* globals, Symbol const* name);
 
-static inline void Globals_insert(struct Globals* globals, struct Symbol const* name, struct Var* var);
+static inline void Globals_insert(Globals* globals, Symbol const* name, Var* var);
 
 #endif // GLOBALS_H

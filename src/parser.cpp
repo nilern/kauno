@@ -4,8 +4,8 @@
 
 #include "state.hpp"
 
-static inline void parse_expr(struct State* state, struct Lexer* lexer) {
-    struct Token const tok = Lexer_peek(lexer);
+static inline void parse_expr(State* state, Lexer* lexer) {
+    Token const tok = Lexer_peek(lexer);
 
     switch (tok.type) {
     case TOKEN_VAR: {

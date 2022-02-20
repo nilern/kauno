@@ -18,29 +18,29 @@ static inline size_t Symbol_hash(char const* name, size_t name_size) {
     return hash;
 }
 
-static inline struct SymbolTable SymbolTable_new() {
+static inline SymbolTable SymbolTable_new() {
     size_t const capacity = 2;
 
-    size_t const symbols_size = sizeof(struct Symbol*)*capacity;
-    struct Symbol** const symbols = (struct Symbol**)malloc(symbols_size);
+    size_t const symbols_size = sizeof(Symbol*)*capacity;
+    Symbol** const symbols = (Symbol**)malloc(symbols_size);
     memset(symbols, 0, symbols_size);
 
-    return (struct SymbolTable){
+    return (SymbolTable){
         .count = 0,
         .capacity = capacity,
         .symbols = symbols
     };
 }
 
-static inline void SymbolTable_rehash(struct SymbolTable* symbols) {
+static inline void SymbolTable_rehash(SymbolTable* symbols) {
     size_t const new_capacity = symbols->capacity*2;
 
-    size_t const symbols_size = sizeof(struct Symbol*)*new_capacity;
-    struct Symbol** const new_symbols = (struct Symbol**)malloc(symbols_size);
+    size_t const symbols_size = sizeof(Symbol*)*new_capacity;
+    Symbol** const new_symbols = (Symbol**)malloc(symbols_size);
     memset(new_symbols, 0, symbols_size);
 
     for (size_t i = 0; i < symbols->capacity; ++i) {
-        struct Symbol* const symbol = symbols->symbols[i];
+        Symbol* const symbol = symbols->symbols[i];
 
         if (symbol) {
             size_t const hash = symbol->hash;
@@ -60,18 +60,18 @@ static inline void SymbolTable_rehash(struct SymbolTable* symbols) {
     symbols->symbols = new_symbols;
 }
 
-static inline void SymbolTable_delete(struct SymbolTable* symbols) {
+static inline void SymbolTable_delete(SymbolTable* symbols) {
     free(symbols->symbols);
 }
 
-static inline Handle Symbol_new(struct State* state, char const* name, size_t name_size) {
-    struct SymbolTable* symbols = &state->symbols;
+static inline Handle Symbol_new(State* state, char const* name, size_t name_size) {
+    SymbolTable* symbols = &state->symbols;
     size_t const hash = Symbol_hash(name, name_size);
 
     while (true) {
         size_t const max_index = symbols->capacity - 1;
         for (size_t collisions = 0, i = hash & max_index;; ++collisions, i = (i + collisions) & max_index) {
-            struct Symbol* const isymbol = symbols->symbols[i];
+            Symbol* const isymbol = symbols->symbols[i];
 
             if (!isymbol) { // Not found
                 if ((symbols->count + 1) * 2 > symbols->capacity) { // New load factor > 0.5
@@ -79,8 +79,8 @@ static inline Handle Symbol_new(struct State* state, char const* name, size_t na
                     break; // continue outer loop
                 } else {
                     // Construct:
-                    struct Symbol* symbol = (struct Symbol*)alloc(&state->heap, state->Symbol);
-                    *symbol = (struct Symbol){
+                    Symbol* symbol = (Symbol*)alloc(&state->heap, state->Symbol);
+                    *symbol = (Symbol){
                         .hash = hash,
                         .name_size = name_size
                     };

@@ -7,9 +7,9 @@
 
 struct State;
 
-typedef struct {
+struct Granule {
     uintptr_t bits;
-} Granule;
+};
 
 struct Semispace {
     Granule* start;
@@ -17,20 +17,20 @@ struct Semispace {
 };
 
 struct Heap {
-    struct Semispace fromspace;
-    struct Semispace tospace;
+    Semispace fromspace;
+    Semispace tospace;
     char* copied;
     char* free;
 };
 
-static inline struct Heap Heap_new(size_t heap_size);
-static inline void Heap_delete(struct Heap* heap);
+static inline Heap Heap_new(size_t heap_size);
+static inline void Heap_delete(Heap* heap);
 
 // FIXME: Failing allocations should trigger collection:
 
-static inline void* alloc(struct Heap* heap, struct Type* type);
-static inline void* alloc_indexed(struct Heap* heap, struct Type* type, size_t indexed_count);
+static inline void* alloc(Heap* heap, Type* type);
+static inline void* alloc_indexed(Heap* heap, Type* type, size_t indexed_count);
 
-static inline void collect(struct State* state);
+static inline void collect(State* state);
 
 #endif // GC_H

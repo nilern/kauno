@@ -8,7 +8,7 @@
 #include "globals.hpp"
 
 struct State {
-    struct Heap heap;
+    Heap heap;
 
     struct Type* Type;
     struct Type* UInt8;
@@ -17,29 +17,29 @@ struct State {
     struct Type* Bool;
     struct Type* Symbol;
     struct Type* Any;
-    struct Type* Var;
+   struct  Type* Var;
 
-    struct SymbolTable symbols;
+    SymbolTable symbols;
 
-    struct Globals globals;
+    Globals globals;
 
     ORef* sp;
     size_t stack_size;
     ORef* stack; // TODO: Growable ("infinite") stack
 };
 
-static inline struct State State_new(size_t heap_size, size_t stack_size);
+static inline State State_new(size_t heap_size, size_t stack_size);
 
-static inline void State_delete(struct State* state);
+static inline void State_delete(State* state);
 
-static inline Handle State_push(struct State* state, ORef value);
+static inline Handle State_push(State* state, ORef value);
 
-static inline Handle State_peek(struct State* state);
+static inline Handle State_peek(State* state);
 
-static inline void State_pop(struct State* state);
+static inline void State_pop(State* state);
 
-static inline void State_popn(struct State* state, size_t n);
+static inline void State_popn(State* state, size_t n);
 
-static inline void State_print_builtin(struct State const* state, FILE* dest, Handle value);
+static inline void State_print_builtin(State const* state, FILE* dest, Handle value);
 
 #endif // STATE_H

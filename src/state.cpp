@@ -5,12 +5,12 @@
 #include <cstring>
 #include <cstdalign>
 
-static inline struct State State_new(size_t heap_size, size_t stack_size) {
-    struct Heap heap = Heap_new(heap_size);
+static inline State State_new(size_t heap_size, size_t stack_size) {
+    Heap heap = Heap_new(heap_size);
 
 
-    struct Type* tmp_USize = (struct Type*)malloc(sizeof(struct Type));
-    *tmp_USize = (struct Type){
+    Type* tmp_USize = (Type*)malloc(sizeof(Type));
+    *tmp_USize = (Type){
         .align = alignof(size_t),
         .min_size = sizeof(size_t),
         .inlineable = true,
@@ -19,8 +19,8 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
         .fields_count = 0
     };
 
-    struct Type* tmp_Bool = (struct Type*)malloc(sizeof(struct Type));
-    *tmp_Bool = (struct Type){
+    Type* tmp_Bool = (Type*)malloc(sizeof(Type));
+    *tmp_Bool = (Type){
         .align = alignof(bool),
         .min_size = sizeof(bool),
         .inlineable = true,
@@ -30,38 +30,38 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
     };
 
     size_t const Type_fields_count = 6;
-    size_t const Type_size = sizeof(struct Type) + Type_fields_count*sizeof(struct Field);
-    struct Type* tmp_Type = (struct Type*)malloc(Type_size);
-    *tmp_Type = (struct Type){
-            .align = alignof(struct Type),
-            .min_size = sizeof(struct Type),
+    size_t const Type_size = sizeof(Type) + Type_fields_count*sizeof(Field);
+    Type* tmp_Type = (Type*)malloc(Type_size);
+    *tmp_Type = (Type){
+            .align = alignof(Type),
+            .min_size = sizeof(Type),
             .inlineable = false,
             .is_bits = false,
             .has_indexed = true,
             .fields_count = Type_fields_count
     };
-    tmp_Type->fields[0] = (struct Field){
-        .offset = offsetof(struct Type, align),
+    tmp_Type->fields[0] = (Field){
+        .offset = offsetof(Type, align),
         .type = oref_from_ptr(tmp_USize)
     };
-    tmp_Type->fields[1] = (struct Field){
-        .offset = offsetof(struct Type, min_size),
+    tmp_Type->fields[1] = (Field){
+        .offset = offsetof(Type, min_size),
         .type = oref_from_ptr(tmp_USize)
     };
-    tmp_Type->fields[2] = (struct Field){
-        .offset = offsetof(struct Type, inlineable),
+    tmp_Type->fields[2] = (Field){
+        .offset = offsetof(Type, inlineable),
         .type = oref_from_ptr(tmp_Bool)
     };
-    tmp_Type->fields[3] = (struct Field){
-        .offset = offsetof(struct Type, is_bits),
+    tmp_Type->fields[3] = (Field){
+        .offset = offsetof(Type, is_bits),
         .type = oref_from_ptr(tmp_Bool)
     };
-    tmp_Type->fields[4] = (struct Field){
-        .offset = offsetof(struct Type, has_indexed),
+    tmp_Type->fields[4] = (Field){
+        .offset = offsetof(Type, has_indexed),
         .type = oref_from_ptr(tmp_Bool)
     };
-    tmp_Type->fields[5] = (struct Field){
-        .offset = offsetof(struct Type, fields_count),
+    tmp_Type->fields[5] = (Field){
+        .offset = offsetof(Type, fields_count),
         .type = oref_from_ptr(tmp_USize)
     };
 
@@ -172,7 +172,7 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
     ORef* const stack = (ORef*)malloc(stack_size);
 
 
-    struct State state = (struct State) {
+    State state = (State) {
         .heap = heap,
 
         .Type = Type,
@@ -205,14 +205,14 @@ static inline struct State State_new(size_t heap_size, size_t stack_size) {
     return state;
 }
 
-static inline void State_delete(struct State* state) {
+static inline void State_delete(State* state) {
     Heap_delete(&state->heap);
     SymbolTable_delete(&state->symbols);
     Globals_delete(&state->globals);
     free(state->stack);
 }
 
-static inline Handle State_push(struct State* state, ORef value) {
+static inline Handle State_push(State* state, ORef value) {
     ORef* const sp = state->sp;
     ORef* const new_sp = sp + 1;
     if (new_sp >= (ORef*)((char*)state + state->stack_size)) { exit(EXIT_FAILURE); } // FIXME
@@ -221,28 +221,28 @@ static inline Handle State_push(struct State* state, ORef value) {
     return (Handle){sp};
 }
 
-static inline Handle State_peek(struct State* state) {
+static inline Handle State_peek(State* state) {
     assert(state->sp > &state->stack[0]);
     return (Handle){state->sp - 1};
 }
 
-static inline void State_pop(struct State* state) {
+static inline void State_pop(State* state) {
     assert(state->sp > &state->stack[0]);
     --state->sp;
 }
 
-static inline void State_popn(struct State* state, size_t n) {
+static inline void State_popn(State* state, size_t n) {
     assert(state->sp - n >= &state->stack[0]);
     state->sp -= n;
 }
 
-static inline void State_print_builtin(struct State const* state, FILE* dest, Handle value) {
-    struct Type* type = obj_type(Handle_oref(value));
+static inline void State_print_builtin(State const* state, FILE* dest, Handle value) {
+    Type* type = obj_type(Handle_oref(value));
     void* data = obj_data(Handle_oref(value));
     if (type == state->Type) {
         fputs("<Type>", dest);
     } else if (type == state->Symbol) {
-        struct Symbol* symbol = (struct Symbol*)data;
+        Symbol* symbol = (Symbol*)data;
 
         fputc('\'', dest);
         for (size_t i = 0; i < symbol->name_size; ++i) {

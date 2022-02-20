@@ -11,16 +11,16 @@ struct Symbol {
     char name[];
 };
 
-static inline Handle Symbol_new(struct State* state, char const* name, size_t name_size);
+static inline Handle Symbol_new(State* state, char const* name, size_t name_size);
 
 struct SymbolTable {
     size_t count;
     size_t capacity;
-    struct Symbol** symbols;
+    Symbol** symbols;
 };
 
-static inline struct SymbolTable SymbolTable_new(void);
+static inline SymbolTable SymbolTable_new(void);
 
-static inline void SymbolTable_delete(struct SymbolTable* symbols);
+static inline void SymbolTable_delete(SymbolTable* symbols);
 
 #endif // SYMBOL_H

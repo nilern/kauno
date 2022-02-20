@@ -12,24 +12,24 @@ Granule const ALIGNMENT_HOLE = {0};
 
 static inline bool granule_eq(Granule g1, Granule g2) { return g1.bits == g2.bits; }
 
-static inline struct Semispace Semispace_new(size_t size) {
+static inline Semispace Semispace_new(size_t size) {
     char* const mem = (char*)malloc(size);
-    return (struct Semispace){
+    return (Semispace){
         .start = (Granule*)mem,
         .end = (Granule*)(mem + size)
     };
 }
 
-static inline void Semispace_delete(struct Semispace* semispace) {
+static inline void Semispace_delete(Semispace* semispace) {
     free(semispace->start);
 }
 
 // FIXME: Convert heap_size to granules properly:
-static inline struct Heap Heap_new(size_t heap_size) {
+static inline Heap Heap_new(size_t heap_size) {
     size_t const semi_size = heap_size / 2;
-    struct Semispace const fromspace = Semispace_new(semi_size);
-    struct Semispace const tospace = Semispace_new(semi_size);
-    return (struct Heap){
+    Semispace const fromspace = Semispace_new(semi_size);
+    Semispace const tospace = Semispace_new(semi_size);
+    return (Heap){
         .fromspace = fromspace,
         .tospace = tospace,
         .copied = (char*)fromspace.start,
@@ -37,21 +37,21 @@ static inline struct Heap Heap_new(size_t heap_size) {
     };
 }
 
-static inline void Heap_delete(struct Heap* heap) {
+static inline void Heap_delete(Heap* heap) {
     Semispace_delete(&heap->fromspace);
     Semispace_delete(&heap->tospace);
 }
 
-static inline void* alloc(struct Heap* heap, struct Type* type) {
+static inline void* alloc(Heap* heap, Type* type) {
     // Compute alignment:
-    size_t const align = type->align > alignof(struct Header) ? type->align : alignof(struct Header);
+    size_t const align = type->align > alignof(Header) ? type->align : alignof(Header);
 
     // Compute obj start:
     size_t const free = (size_t)(void*)heap->free;
     size_t data_start = free - type->min_size; // TODO: overflow check
     data_start &= ~(align - 1); // Align
     void* const obj = (void*)data_start;
-    struct Header* const header = (struct Header*)data_start - 1; // Room for header
+    Header* const header = (Header*)data_start - 1; // Room for header
 
     if ((char*)header >= heap->copied) {
         memset((void*)header, 0, free - (size_t)header); // Zero object, also adding alignment hole if needed
@@ -65,12 +65,12 @@ static inline void* alloc(struct Heap* heap, struct Type* type) {
     }
 }
 
-static inline void* alloc_indexed(struct Heap* heap, struct Type* type, size_t indexed_count) {
+static inline void* alloc_indexed(Heap* heap, Type* type, size_t indexed_count) {
     // TODO: Sanity checks:
-    struct Type* const elem_type = (struct Type*)obj_data(type->fields[type->fields_count - 1].type);
+    Type* const elem_type = (Type*)obj_data(type->fields[type->fields_count - 1].type);
 
     // Compute alignment:
-    size_t const align = type->align > alignof(struct Header) ? type->align : alignof(struct Header);
+    size_t const align = type->align > alignof(Header) ? type->align : alignof(Header);
     size_t const elem_align = elem_type->align > alignof(size_t) ? elem_type->align : alignof(size_t);
 
     // Compute obj start:
@@ -80,7 +80,7 @@ static inline void* alloc_indexed(struct Heap* heap, struct Type* type, size_t i
     size_t data_start = indexed_start - type->min_size; // TODO: overflow check
     data_start = data_start & ~(align - 1); // Align
     void* const obj = (void*)data_start;
-    struct Header* const header = (struct Header*)data_start - 1; // Room for header
+    Header* const header = (Header*)data_start - 1; // Room for header
 
     if ((char*)header >= heap->copied) {
         memset((void*)header, 0, free - (size_t)header); // Zero object, also adding alignment hole if needed
@@ -95,16 +95,16 @@ static inline void* alloc_indexed(struct Heap* heap, struct Type* type, size_t i
     }
 }
 
-static inline ORef mark(struct Heap*, ORef obj) {
+static inline ORef mark(Heap*, ORef obj) {
     // FIXME: copy object and set fwd ptr
     obj_set_marked(obj);
     return obj;
 }
 
-static inline char* scan_field(struct State* state, ORef field_type, char* data);
+static inline char* scan_field(State* state, ORef field_type, char* data);
 
 // Returns the address immediately after the object data.
-static inline char* scan_fields(struct State* state, struct Type* type, char* data) {
+static inline char* scan_fields(State* state, Type* type, char* data) {
     if (!type->is_bits) {
         char* scan = data;
 
@@ -122,7 +122,7 @@ static inline char* scan_fields(struct State* state, struct Type* type, char* da
 
             // Elements of indexed field:
             ORef const indexed_type = type->fields[lasti].type;
-            size_t const indexed_elem_size = ((struct Type*)obj_data(indexed_type))->min_size;
+            size_t const indexed_elem_size = ((Type*)obj_data(indexed_type))->min_size;
             size_t* const indexed_data = (size_t*)(data + type->fields[lasti].offset);
             size_t const indexed_count = *indexed_data;
             char* indexed_fields = (char*)(indexed_data + 1);
@@ -139,8 +139,8 @@ static inline char* scan_fields(struct State* state, struct Type* type, char* da
 }
 
 // Returns the address immediately after the field data.
-static inline char* scan_field(struct State* state, ORef field_type, char* field) {
-    struct Type* const type = (struct Type*)obj_data(field_type);
+static inline char* scan_field(State* state, ORef field_type, char* field) {
+    Type* const type = (Type*)obj_data(field_type);
     if (type->inlineable) {
         // Scan inlined fields:
         return scan_fields(state, type, field);
@@ -152,7 +152,7 @@ static inline char* scan_field(struct State* state, ORef field_type, char* field
     }
 }
 
-static inline void collect(struct State* state) {
+static inline void collect(State* state) {
     // TODO: Mark roots
 
     // Copy live objects:
@@ -172,7 +172,7 @@ static inline void collect(struct State* state) {
     }
 
     // Swap semispaces:
-    struct Semispace tmp = state->heap.fromspace;
+    Semispace tmp = state->heap.fromspace;
     state->heap.fromspace = state->heap.tospace;
     state->heap.tospace = tmp;
     state->heap.free = (char*)state->heap.fromspace.end;

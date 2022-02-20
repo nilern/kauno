@@ -9,6 +9,6 @@ struct Span {
     size_t end;
 };
 
-static inline void Span_print(FILE* dest, struct Span span);
+static inline void Span_print(FILE* dest, Span span);
 
 #endif // POS_H

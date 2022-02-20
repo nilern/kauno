@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <cctype>
 
-static inline void Token_print(FILE* dest, struct Token tok) {
+static inline void Token_print(FILE* dest, Token tok) {
     fprintf(dest, "<%s \"", TOKEN_NAMES[tok.type]);
 
     for (size_t i = 0; i < tok.len; ++i) {
@@ -17,9 +17,9 @@ static inline void Token_print(FILE* dest, struct Token tok) {
     fputc('>', dest);
 }
 
-static inline struct Lexer Lexer_new(char const* chars, size_t len) {
+static inline Lexer Lexer_new(char const* chars, size_t len) {
     size_t const index = 0;
-    return (struct Lexer){
+    return (Lexer){
         .chars = chars,
         .end = chars + len,
         .first = {
@@ -32,7 +32,7 @@ static inline struct Lexer Lexer_new(char const* chars, size_t len) {
     };
 }
 
-static inline void Lexer_look_ahead(struct Lexer* lexer) {
+static inline void Lexer_look_ahead(Lexer* lexer) {
     while (true) {
         if (lexer->chars < lexer->end) {
             if (isspace(*lexer->chars)) {
@@ -47,7 +47,7 @@ static inline void Lexer_look_ahead(struct Lexer* lexer) {
                     ++len;
                 }
 
-                lexer->first = (struct Token){
+                lexer->first = (Token){
                     .type = TOKEN_VAR,
                     .chars = tok_chars,
                     .len = len,
@@ -63,7 +63,7 @@ static inline void Lexer_look_ahead(struct Lexer* lexer) {
                     ++len;
                 }
 
-                lexer->first = (struct Token){
+                lexer->first = (Token){
                     .type = TOKEN_INT,
                     .chars = tok_chars,
                     .len = len,
@@ -74,7 +74,7 @@ static inline void Lexer_look_ahead(struct Lexer* lexer) {
                 exit(EXIT_FAILURE); // FIXME
             }
         } else {
-            lexer->first = (struct Token){
+            lexer->first = (Token){
                 .type = TOKEN_EOF,
                 .chars = lexer->chars,
                 .len = 0,
@@ -85,7 +85,7 @@ static inline void Lexer_look_ahead(struct Lexer* lexer) {
     }
 }
 
-static inline struct Token Lexer_peek(struct Lexer* lexer) {
+static inline Token Lexer_peek(Lexer* lexer) {
     if (lexer->first.type == TOKEN_EOF) {
         Lexer_look_ahead(lexer);
     }
@@ -93,14 +93,14 @@ static inline struct Token Lexer_peek(struct Lexer* lexer) {
     return lexer->first;
 }
 
-static inline void Lexer_next(struct Lexer* lexer) {
+static inline void Lexer_next(Lexer* lexer) {
     if (lexer->first.type == TOKEN_EOF) {
         Lexer_look_ahead(lexer);
     }
 
     lexer->chars = lexer->first.chars + lexer->first.len;
     lexer->index = lexer->first.span.end;
-    lexer->first = (struct Token){
+    lexer->first = (Token){
         .type = TOKEN_EOF,
         .chars = lexer->chars,
         .len = 0,

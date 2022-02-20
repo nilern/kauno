@@ -10,7 +10,7 @@ static inline ORef oref_from_ptr(void* obj) { return (ORef){obj}; }
 
 static inline ORef Handle_oref(Handle handle) { return *handle.oref_ptr; }
 
-static inline struct Header* obj_header(ORef obj) { return (struct Header*)obj.ptr - 1; }
+static inline Header* obj_header(ORef obj) { return (Header*)obj.ptr - 1; }
 
 static inline void* obj_data(ORef obj) { return obj.ptr; }
 
@@ -18,28 +18,28 @@ static inline bool obj_is_marked(ORef obj) { return obj_header(obj)->bits & 1; }
 
 static inline void obj_set_marked(ORef obj) { obj_header(obj)->bits |= 1; }
 
-static inline struct Type* obj_type(ORef obj) {
-    return (struct Type*)(void*)(obj_header(obj)->bits & ~1);
+static inline Type* obj_type(ORef obj) {
+    return (Type*)(void*)(obj_header(obj)->bits & ~1);
 }
 
 static inline void obj_set_type(ORef obj, ORef type) {
     obj_header(obj)->bits = (size_t)type.ptr | (obj_header(obj)->bits & 1);
 }
 
-static inline ORef obj_field(struct State* state, Handle handle, size_t index) {
+static inline ORef obj_field(State* state, Handle handle, size_t index) {
     ORef const obj = Handle_oref(handle);
 
-    struct Type* const type = obj_type(obj);
+    Type* const type = obj_type(obj);
 
     if (index >= type->fields_count) {
         exit(EXIT_FAILURE); // FIXME
     }
-    struct Field const field = type->fields[index];
-    struct Type* const field_type = (struct Type*)obj_data(field.type);
+    Field const field = type->fields[index];
+    Type* const field_type = (Type*)obj_data(field.type);
 
     if (field_type->inlineable) {
         void* const field_obj = alloc(&state->heap, field_type);
-        struct Type* const field_type = (struct Type*)obj_data(obj_type(obj)->fields[index].type);
+        Type* const field_type = (Type*)obj_data(obj_type(obj)->fields[index].type);
         memcpy(field_obj, (void*)((char*)obj_data(obj) + field.offset), field_type->min_size);
         return oref_from_ptr(field_obj);
     } else {
@@ -47,15 +47,15 @@ static inline ORef obj_field(struct State* state, Handle handle, size_t index) {
     }
 }
 
-static inline void obj_field_set(struct State*, Handle handle, size_t index, Handle new_val_handle) {
+static inline void obj_field_set(State*, Handle handle, size_t index, Handle new_val_handle) {
     ORef const obj = Handle_oref(handle);
 
-    struct Type* const type = obj_type(obj);
+    Type* const type = obj_type(obj);
 
     if (index >= type->fields_count) {
         exit(EXIT_FAILURE); // FIXME
     }
-    struct Field const field = type->fields[index];
+    Field const field = type->fields[index];
 
     ORef const new_val = Handle_oref(new_val_handle);
 
@@ -63,7 +63,7 @@ static inline void obj_field_set(struct State*, Handle handle, size_t index, Han
     if (!obj_eq(oref_from_ptr((void*)obj_type(new_val)), field.type)) {
         exit(EXIT_FAILURE); // FIXME
     }
-    struct Type* const field_type = (struct Type*)obj_data(field.type);
+    Type* const field_type = (Type*)obj_data(field.type);
 
     if (field_type->inlineable) {
         memcpy((void*)((char*)obj_data(obj) + field.offset), obj_data(new_val), field_type->min_size);
