@@ -12,7 +12,6 @@
 
 int main(int argc, char* argv[]) {
     if (argc == 2) {
-        // FIXME: Stack-allocates interpreter stack:
         State state = State_new(1024*1024, 1024*1024); // 1 MiB
 
         {

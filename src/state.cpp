@@ -17,7 +17,8 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .inlineable = true,
         .is_bits = true,
         .has_indexed = false,
-        .fields_count = 0
+        .fields_count = 0,
+        .fields = {}
     };
 
     Type* tmp_Bool = (Type*)malloc(sizeof(Type));
@@ -27,7 +28,8 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .inlineable = true,
         .is_bits = true,
         .has_indexed = false,
-        .fields_count = 0
+        .fields_count = 0,
+        .fields = {}
     };
 
     size_t const Type_fields_count = 6;
@@ -39,7 +41,8 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
             .inlineable = false,
             .is_bits = false,
             .has_indexed = true,
-            .fields_count = Type_fields_count
+            .fields_count = Type_fields_count,
+            .fields = {}
     };
     tmp_Type->fields[0] = (Field){
         .offset = offsetof(Type, align),
@@ -62,7 +65,7 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .type = ORef(tmp_Bool)
     };
     tmp_Type->fields[5] = (Field){
-        .offset = offsetof(Type, fields_count),
+        .offset = offsetof(Type, fields),
         .type = ORef(tmp_USize)
     };
 
@@ -78,7 +81,8 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .inlineable = true,
         .is_bits = true,
         .has_indexed = false,
-        .fields_count = 0
+        .fields_count = 0,
+        .fields = {}
     };
 
     struct Type* USize = (struct Type*)heap.alloc_indexed(Type, 0);
@@ -88,7 +92,8 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .inlineable = true,
         .is_bits = true,
         .has_indexed = false,
-        .fields_count = 0
+        .fields_count = 0,
+        .fields = {}
     };
 
     struct Type* Bool = (struct Type*)heap.alloc_indexed(Type, 0);
@@ -98,7 +103,8 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .inlineable = true,
         .is_bits = true,
         .has_indexed = false,
-        .fields_count = 0
+        .fields_count = 0,
+        .fields = {}
     };
 
 
@@ -116,13 +122,14 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
 
 
     struct Type* UInt8 = (struct Type*)heap.alloc_indexed(Type, 0);
-    *USize = (struct Type){
+    *UInt8 = (struct Type){
         .align = alignof(uint8_t),
         .min_size = sizeof(uint8_t),
         .inlineable = true,
         .is_bits = true,
         .has_indexed = false,
-        .fields_count = 0
+        .fields_count = 0,
+        .fields = {}
     };
 
     size_t const Symbol_fields_count = 2;
@@ -133,14 +140,15 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .inlineable = false,
         .is_bits = false,
         .has_indexed = true,
-        .fields_count = Symbol_fields_count
+        .fields_count = Symbol_fields_count,
+        .fields = {}
     };
     Symbol->fields[0] = (struct Field){
         .offset = offsetof(struct Symbol, hash),
         .type = ORef(USize)
     };
     Symbol->fields[1] = (struct Field){
-        .offset = offsetof(struct Symbol, name_size),
+        .offset = offsetof(struct Symbol, name),
         .type = ORef(UInt8)
     };
 
@@ -152,7 +160,8 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .inlineable = false,
         .is_bits = false,
         .has_indexed = false,
-        .fields_count = Any_fields_count
+        .fields_count = Any_fields_count,
+        .fields = {}
     };
 
     size_t const Var_fields_count = 1;
@@ -163,7 +172,8 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .inlineable = false,
         .is_bits = false,
         .has_indexed = false,
-        .fields_count = Var_fields_count
+        .fields_count = Var_fields_count,
+        .fields = {}
     };
     Var->fields[0] = (struct Field){
         .offset = offsetof(struct Var, value),

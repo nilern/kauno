@@ -79,10 +79,11 @@ static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t n
                     break; // continue outer loop
                 } else {
                     // Construct:
-                    Symbol* symbol = (Symbol*)state->heap.alloc(state->Symbol.data());
+                    Symbol* symbol = (Symbol*)state->heap.alloc_indexed(state->Symbol.data(), name_size);
                     *symbol = (Symbol){
                         .hash = hash,
-                        .name_size = name_size
+                        .name_size = name_size,
+                        .name = {}
                     };
                     memcpy(&symbol->name, name, name_size);
 

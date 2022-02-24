@@ -8,7 +8,7 @@
 struct Symbol {
     size_t hash;
     size_t name_size;
-    char name[];
+    char name[0];
 };
 
 static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t name_size);

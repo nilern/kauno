@@ -39,7 +39,7 @@ static inline Handle<T> State_push(State* state, ORef<T> value) {
     if (new_sp >= (ORef<Any>*)((char*)state + state->stack_size)) { exit(EXIT_FAILURE); } // FIXME
     *sp = value.as_any();
     state->sp = new_sp;
-    return Handle(sp).unchecked_cast<T>();
+    return Handle(sp).template unchecked_cast<T>();
 }
 
 static inline Handle<Any> State_peek(State* state);

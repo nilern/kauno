@@ -48,7 +48,7 @@ void* Heap::alloc_indexed(Type* type, size_t indexed_count) {
     size_t indexed_start = free_ - indexed_count * elem_type->min_size; // TODO: overflow check
     indexed_start &= ~(elem_align - 1); // Align
     size_t data_start = indexed_start - type->min_size; // TODO: overflow check
-    data_start = data_start & ~(align - 1); // Align
+    data_start &= ~(align - 1); // Align
     void* const obj = (void*)data_start;
     Header* const header = (Header*)data_start - 1; // Room for header
 

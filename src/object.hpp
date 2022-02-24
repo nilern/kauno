@@ -73,7 +73,7 @@ struct Type {
     bool is_bits;
     bool has_indexed;
     size_t fields_count; // if is_bits then byte count else field_types count
-    Field fields[];
+    Field fields[0];
 };
 
 #endif // OBJECT_H
