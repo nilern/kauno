@@ -64,14 +64,41 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .offset = offsetof(Type, has_indexed),
         .type = ORef(tmp_Bool)
     };
-    tmp_Type->fields[5] = (Field){
-        .offset = offsetof(Type, fields),
+
+    size_t const Field_fields_count = 2;
+    size_t const Field_size = sizeof(Type) + Field_fields_count*sizeof(Field);
+    Type* const tmp_Field = (Type*)malloc(Field_size);
+    *tmp_Field = (Type){
+        .align = alignof(Field),
+        .min_size = sizeof(Field),
+        .inlineable = true,
+        .is_bits = false,
+        .has_indexed = false,
+        .fields_count = Field_fields_count,
+        .fields = {}
+    };
+    tmp_Field->fields[0] = (Field){
+        .offset = offsetof(Field, offset),
         .type = ORef(tmp_USize)
     };
+    tmp_Field->fields[1] = (Field){
+        .offset = offsetof(Field, type),
+        .type = ORef(tmp_Type)
+    };
+
+    tmp_Type->fields[5] = (Field){
+        .offset = offsetof(Type, fields),
+        .type = ORef(tmp_Field)
+    };
+
 
     struct Type* Type = (struct Type*)heap.alloc_indexed(tmp_Type, Type_fields_count);
     ORef(Type).set_type(ORef(Type));
     memcpy(Type, tmp_Type, Type_size);
+
+    struct Type* Field = (struct Type*)heap.alloc_indexed(tmp_Type, Field_fields_count);
+    ORef(Field).set_type(ORef(Type));
+    memcpy(Field, tmp_Field, Field_size);
 
 
     struct Type* Int64 = (struct Type*)heap.alloc_indexed(Type, 0);
@@ -113,12 +140,16 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
     Type->fields[2].type = ORef(Bool);
     Type->fields[3].type = ORef(Bool);
     Type->fields[4].type = ORef(Bool);
-    Type->fields[5].type = ORef(USize);
+    Type->fields[5].type = ORef(Field);
+
+    Field->fields[0].type = ORef(USize);
+    Field->fields[1].type = ORef(Type);
 
 
     free(tmp_USize);
     free(tmp_Bool);
     free(tmp_Type);
+    free(tmp_Field);
 
 
     struct Type* UInt8 = (struct Type*)heap.alloc_indexed(Type, 0);
