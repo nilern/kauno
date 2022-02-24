@@ -66,6 +66,8 @@ struct Field {
     size_t offset;
     size_t size;
     bool inlined;
+
+    Field(ORef<Type> type_, size_t offset_);
 };
 
 struct Type {
@@ -77,5 +79,9 @@ struct Type {
     size_t fields_count; // if is_bits then byte count else field_types count
     Field fields[0];
 };
+
+Field::Field(ORef<Type> type_, size_t offset_)
+    : type(type_), offset(offset_),
+      size(type_.data()->min_size), inlined(type_.data()->inlineable) {}
 
 #endif // OBJECT_H

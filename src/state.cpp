@@ -44,36 +44,11 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .fields_count = Type_fields_count,
         .fields = {}
     };
-    tmp_Type->fields[0] = (Field){
-        .type = ORef(tmp_USize),
-        .offset = offsetof(Type, align),
-        .size = tmp_USize->min_size,
-        .inlined = tmp_USize->inlineable
-    };
-    tmp_Type->fields[1] = (Field){
-        .type = ORef(tmp_USize),
-        .offset = offsetof(Type, min_size),
-        .size = tmp_USize->min_size,
-        .inlined = tmp_USize->inlineable
-    };
-    tmp_Type->fields[2] = (Field){
-        .type = ORef(tmp_Bool),
-        .offset = offsetof(Type, inlineable),
-        .size = tmp_Bool->min_size,
-        .inlined = tmp_Bool->inlineable
-    };
-    tmp_Type->fields[3] = (Field){
-        .type = ORef(tmp_Bool),
-        .offset = offsetof(Type, is_bits),
-        .size = tmp_Bool->min_size,
-        .inlined = tmp_Bool->inlineable
-    };
-    tmp_Type->fields[4] = (Field){
-        .type = ORef(tmp_Bool),
-        .offset = offsetof(Type, has_indexed),
-        .size = tmp_Bool->min_size,
-        .inlined = tmp_Bool->inlineable
-    };
+    tmp_Type->fields[0] = Field(ORef(tmp_USize), offsetof(Type, align));
+    tmp_Type->fields[1] = Field(ORef(tmp_USize), offsetof(Type, min_size));
+    tmp_Type->fields[2] = Field(ORef(tmp_Bool), offsetof(Type, inlineable));
+    tmp_Type->fields[3] = Field(ORef(tmp_Bool), offsetof(Type, is_bits));
+    tmp_Type->fields[4] = Field(ORef(tmp_Bool), offsetof(Type, has_indexed));
 
     size_t const Field_fields_count = 2;
     size_t const Field_size = sizeof(Type) + Field_fields_count*sizeof(Field);
@@ -87,25 +62,10 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .fields_count = Field_fields_count,
         .fields = {}
     };
-    tmp_Field->fields[0] = (Field){
-        .type = ORef(tmp_USize),
-        .offset = offsetof(Field, offset),
-        .size = tmp_USize->min_size,
-        .inlined = tmp_USize->inlineable
-    };
-    tmp_Field->fields[1] = (Field){
-        .type = ORef(tmp_Type),
-        .offset = offsetof(Field, type),
-        .size = tmp_Type->min_size,
-        .inlined = tmp_Type->inlineable
-    };
+    tmp_Field->fields[0] = Field(ORef(tmp_USize), offsetof(Field, offset));
+    tmp_Field->fields[1] = Field(ORef(tmp_Type), offsetof(Field, type));
 
-    tmp_Type->fields[5] = (Field){
-        .type = ORef(tmp_Field),
-        .offset = offsetof(Type, fields),
-        .size = tmp_Field->min_size,
-        .inlined = tmp_Field->inlineable
-    };
+    tmp_Type->fields[5] = Field(ORef(tmp_Field), offsetof(Type, fields));
 
 
     struct Type* Type = (struct Type*)heap.alloc_indexed(tmp_Type, Type_fields_count);
@@ -190,18 +150,8 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .fields_count = Symbol_fields_count,
         .fields = {}
     };
-    Symbol->fields[0] = (struct Field){
-        .type = ORef(USize),
-        .offset = offsetof(struct Symbol, hash),
-        .size = USize->min_size,
-        .inlined = USize->inlineable
-    };
-    Symbol->fields[1] = (struct Field){
-        .type = ORef(UInt8),
-        .offset = offsetof(struct Symbol, name),
-        .size = UInt8->min_size,
-        .inlined = UInt8->inlineable
-    };
+    Symbol->fields[0] = (struct Field){ORef(USize), offsetof(struct Symbol, hash)};
+    Symbol->fields[1] = (struct Field){ORef(UInt8), offsetof(struct Symbol, name)};
 
     size_t const Any_fields_count = 0;
     struct Type* Any = (struct Type*)heap.alloc_indexed(Type, Any_fields_count);
@@ -226,12 +176,7 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .fields_count = Var_fields_count,
         .fields = {}
     };
-    Var->fields[0] = (struct Field){
-        .type = ORef(Any),
-        .offset = offsetof(struct Var, value),
-        .size = sizeof(ORef<struct Any>),
-        .inlined = Any->inlineable
-    };
+    Var->fields[0] = (struct Field){ORef(Any), offsetof(struct Var, value)};
 
     ORef<struct Any>* const stack = (ORef<struct Any>*)malloc(stack_size);
 
