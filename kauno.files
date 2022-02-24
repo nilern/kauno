@@ -1,6 +1,7 @@
 LICENSE
 README.md
 build.sh
+design.md
 src/eval.cpp
 src/eval.hpp
 src/gc.cpp
