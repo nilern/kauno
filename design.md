@@ -71,4 +71,5 @@ also be set in place. Indexed fields require the index in addition to the access
 Like calls, field accesses will be inline cached. This is simple since types, fields and accessors are
 all immutable.
 
-Field accessors for parameterized types are currently unclear.
+Field accessors for parameterized types don't need any extra logic; the accessee is of an instantiated type
+and that type contains the specialized `Field`s.
