@@ -60,13 +60,12 @@ ORef<F> obj_field(State* state, Handle<T> handle, size_t index) {
         exit(EXIT_FAILURE); // FIXME
     }
     Field const field = type->fields[index];
-    Type* const field_type = field.type.data();
 
-    if (field_type->inlineable) {
-        F* const field_obj = state->heap.alloc(field_type);
+    if (field.inlined) {
+        F* const field_obj = state->heap.alloc(field.type.data());
         obj = Handle_oref(handle); // Reload after potential collection
         Type* const field_type = (Type*)obj_data(obj_type(obj)->fields[index].type);
-        memcpy(field_obj, (void*)((char*)obj_data(obj) + field.offset), field_type->min_size);
+        memcpy(field_obj, (void*)((char*)obj_data(obj) + field.offset), field.size);
         return ORef(field_obj);
     } else {
         return *(ORef<F>*)((char*)obj_data(obj) + field.offset);

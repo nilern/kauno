@@ -62,8 +62,10 @@ public:
 };
 
 struct Field {
-    size_t offset;
     ORef<Type> type;
+    size_t offset;
+    size_t size;
+    bool inlined;
 };
 
 struct Type {
