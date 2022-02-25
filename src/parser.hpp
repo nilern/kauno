@@ -4,6 +4,6 @@
 #include "object.hpp"
 #include "lexer.hpp"
 
-static inline void parse_expr(State* state, Lexer* lexer);
+static inline Handle<Any> parse_expr(State* state, Lexer* lexer);
 
 #endif // PARSER_H

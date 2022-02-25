@@ -4,15 +4,14 @@
 
 #include "state.hpp"
 
-static inline void parse_expr(State* state, Lexer* lexer) {
+static inline Handle<Any> parse_expr(State* state, Lexer* lexer) {
     Token const tok = Lexer_peek(lexer);
 
     switch (tok.type) {
     case TOKEN_VAR: {
         Lexer_next(lexer);
 
-        Symbol_new(state, tok.chars, tok.len);
-        return;
+        return Symbol_new(state, tok.chars, tok.len).template unchecked_cast<Any>();
     }
 
     case TOKEN_INT: {
@@ -28,10 +27,11 @@ static inline void parse_expr(State* state, Lexer* lexer) {
 
         int64_t* data = (int64_t*)state->heap.alloc(state->Int64.data());
         *data = n;
-        State_push(state, ORef(data));
-        return;
+        return State_push(state, ORef(data)).template unchecked_cast<Any>();
     }
 
-    case TOKEN_EOF: exit(EXIT_FAILURE); // FIXME
+    case TOKEN_EOF: {}
     }
+
+    exit(EXIT_FAILURE); // FIXME
 }
