@@ -178,9 +178,21 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
     };
     Var->fields[0] = (struct Field){ORef(Any), offsetof(struct Var, value)};
 
+    size_t const Call_fields_count = 2;
+    struct Type* Call = (struct Type*)heap.alloc_indexed(Type, Call_fields_count);
+    *Call = (struct Type){
+        .align = alignof(struct Call),
+        .min_size = sizeof(struct Call),
+        .inlineable = false,
+        .is_bits = false,
+        .has_indexed = true,
+        .fields_count = Call_fields_count,
+        .fields = {}
+    };
+    Call->fields[0] = (struct Field){ORef(Any), offsetof(struct Call, callee)};
+    Call->fields[1] = (struct Field){ORef(Any), offsetof(struct Call, args)};
+
     ORef<struct Any>* const stack = (ORef<struct Any>*)malloc(stack_size);
-
-
     State state = (State) {
         .heap = std::move(heap),
 
@@ -192,6 +204,7 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .Symbol = ORef(Symbol),
         .Any = ORef(Any),
         .Var = ORef(Var),
+        .Call = ORef(Call),
 
         .symbols = SymbolTable_new(),
 
@@ -222,6 +235,11 @@ static inline void State_delete(State* state) {
 static inline Handle<Any> State_peek(State* state) {
     assert(state->sp > &state->stack[0]);
     return Handle(state->sp - 1);
+}
+
+static inline Handle<Any> State_peek_nth(State* state, size_t n) {
+    assert(state->sp - n >= &state->stack[0]);
+    return Handle(state->sp - 1 - n);
 }
 
 static inline void State_pop(State* state) {

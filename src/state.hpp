@@ -6,6 +6,7 @@
 #include "gc.hpp"
 #include "symbol.hpp"
 #include "globals.hpp"
+#include "ast.hpp"
 
 struct State {
     Heap heap;
@@ -18,6 +19,7 @@ struct State {
     ORef<struct Type> Symbol;
     ORef<struct Type> Any;
     ORef<struct Type> Var;
+    ORef<struct Type> Call;
 
     SymbolTable symbols;
 
@@ -43,6 +45,8 @@ static inline Handle<T> State_push(State* state, ORef<T> value) {
 }
 
 static inline Handle<Any> State_peek(State* state);
+
+static inline Handle<Any> State_peek_nth(State* state, size_t n);
 
 static inline void State_pop(State* state);
 
