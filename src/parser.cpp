@@ -23,7 +23,7 @@ static inline Handle<Any> parse_expr(State* state, Lexer* lexer) {
             .args = {}
         };
         if (argc > 0) {
-            memcpy(&call->args, State_peek_nth(state, argc - 1).data(), sizeof(ORef<Any>)*argc);
+            memcpy(&call->args, State_peek_nth(state, argc - 1).oref_ptr(), sizeof(ORef<Any>)*argc);
         }
 
         State_popn(state, argc + 1);

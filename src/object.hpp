@@ -51,6 +51,8 @@ public:
 
     ORef<T> oref() const { return *oref_ptr_; }
 
+    ORef<T>* oref_ptr() const { return oref_ptr_; }
+
     ORef<Type> type() const { return oref().type(); }
 
     T* data() const { return oref().data(); }

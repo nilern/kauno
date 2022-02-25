@@ -11,6 +11,7 @@
 static inline Handle<Any> builtin_prn(State* state) {
     State_print_builtin(state, stdout, State_peek(state));
     puts("");
+    State_pop_nth(state, 1);
     return State_peek(state); // FIXME
 }
 

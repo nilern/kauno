@@ -21,7 +21,7 @@ static inline Handle<Any> eval(State* state) {
         Handle<Call> const call = expr.unchecked_cast<Call>();
 
         State_push(state, call.data()->callee);
-        Handle<Any> const callee = eval(state);
+        eval(state);
 
         size_t const argc = call.data()->args_count;
         for (size_t i = 0; i < argc; ++i) {
@@ -31,6 +31,7 @@ static inline Handle<Any> eval(State* state) {
 
         State_pop_nth(state, argc + 1); // Pop `call`
 
+        Handle<Any> const callee = State_peek_nth(state, argc);
         if (callee.type() == state->Fn) {
             Handle<Fn> const fn = callee.unchecked_cast<Fn>();
 
