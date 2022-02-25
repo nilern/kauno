@@ -20,6 +20,8 @@ struct State {
     ORef<struct Type> Any;
     ORef<struct Type> Var;
     ORef<struct Type> Call;
+    ORef<struct Type> CodePtr;
+    ORef<struct Type> Fn;
 
     SymbolTable symbols;
 
@@ -51,6 +53,8 @@ static inline Handle<Any> State_peek_nth(State* state, size_t n);
 static inline void State_pop(State* state);
 
 static inline void State_popn(State* state, size_t n);
+
+static inline void State_pop_nth(State* state, size_t n);
 
 static inline void State_print_builtin(State const* state, FILE* dest, Handle<Any> value);
 

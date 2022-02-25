@@ -6,6 +6,14 @@
 #include <cstdalign>
 #include <utility>
 
+#include "fn.hpp"
+
+static inline Handle<Any> builtin_prn(State* state) {
+    State_print_builtin(state, stdout, State_peek(state));
+    puts("");
+    return State_peek(state); // FIXME
+}
+
 static inline State State_new(size_t heap_size, size_t stack_size) {
     Heap heap(heap_size);
 
@@ -192,6 +200,30 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
     Call->fields[0] = (struct Field){ORef(Any), offsetof(struct Call, callee)};
     Call->fields[1] = (struct Field){ORef(Any), offsetof(struct Call, args)};
 
+    struct Type* CodePtr_ = (struct Type*)heap.alloc_indexed(Type, 0);
+    *CodePtr_ = (struct Type){
+        .align = alignof(CodePtr),
+        .min_size = sizeof(CodePtr),
+        .inlineable = true,
+        .is_bits = true,
+        .has_indexed = false,
+        .fields_count = 0,
+        .fields = {}
+    };
+
+    size_t const Fn_fields_count = 1;
+    struct Type* Fn = (struct Type*)heap.alloc_indexed(Type, Fn_fields_count);
+    *Fn = (struct Type){
+        .align = alignof(struct Fn),
+        .min_size = sizeof(struct Fn),
+        .inlineable = true,
+        .is_bits = false,
+        .has_indexed = false,
+        .fields_count = Fn_fields_count,
+        .fields = {}
+    };
+    Fn->fields[0] = (struct Field){ORef(CodePtr_), offsetof(struct Fn, code)};
+
     ORef<struct Any>* const stack = (ORef<struct Any>*)malloc(stack_size);
     State state = (State) {
         .heap = std::move(heap),
@@ -205,6 +237,8 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
         .Any = ORef(Any),
         .Var = ORef(Var),
         .Call = ORef(Call),
+        .CodePtr = ORef(CodePtr_),
+        .Fn = ORef(Fn),
 
         .symbols = SymbolTable_new(),
 
@@ -220,6 +254,14 @@ static inline State State_new(size_t heap_size, size_t stack_size) {
     Handle<struct Symbol> const Type_symbol = Symbol_new(&state, "Type", 4);
     Handle<struct Var> const Type_var = Var_new(&state, Type_handle.as_any());
     Globals_insert(&state.globals, Type_symbol.oref(), Type_var.oref());
+    State_popn(&state, 3);
+
+    struct Fn* const prn = (struct Fn*)state.heap.alloc(Fn);
+    *prn = (struct Fn){.code = builtin_prn};
+    Handle<struct Fn> const prn_handle = State_push(&state, ORef(prn));
+    Handle<struct Symbol> const prn_symbol = Symbol_new(&state, "prn", 3);
+    Handle<struct Var> const prn_var = Var_new(&state, prn_handle.as_any());
+    Globals_insert(&state.globals, prn_symbol.oref(), prn_var.oref());
     State_popn(&state, 3);
 
 
@@ -250,6 +292,12 @@ static inline void State_pop(State* state) {
 static inline void State_popn(State* state, size_t n) {
     assert(state->sp - n >= &state->stack[0]);
     state->sp -= n;
+}
+
+static inline void State_pop_nth(State* state, size_t n) {
+    assert(state->sp - n >= &state->stack[0]);
+    memmove(state->sp - 1 - n, state->sp - n, sizeof(ORef<Any>)*n);
+    --state->sp;
 }
 
 static inline void State_print_builtin(State const* state, FILE* dest, Handle<Any> value) {

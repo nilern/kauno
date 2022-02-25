@@ -5,6 +5,7 @@ design.md
 src/ast.hpp
 src/eval.cpp
 src/eval.hpp
+src/fn.hpp
 src/gc.cpp
 src/gc.hpp
 src/globals.cpp
