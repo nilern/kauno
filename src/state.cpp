@@ -41,32 +41,12 @@ State::State(size_t heap_size, size_t stack_size_) :
 {
     sp = stack;
 
-    struct Type* tmp_USize = (struct Type*)malloc(sizeof(struct Type));
-    *tmp_USize = (struct Type){
-        .align = alignof(size_t),
-        .min_size = sizeof(size_t),
-        .inlineable = true,
-        .is_bits = true,
-        .has_indexed = false,
-        .fields_count = 0,
-        .fields = {}
-    };
 
-    struct Type* tmp_Bool = (struct Type*)malloc(sizeof(struct Type));
-    *tmp_Bool = (struct Type){
-        .align = alignof(bool),
-        .min_size = sizeof(bool),
-        .inlineable = true,
-        .is_bits = true,
-        .has_indexed = false,
-        .fields_count = 0,
-        .fields = {}
-    };
-
-    size_t const Type_fields_count = 6;
+    size_t const Type_fields_count = 7;
     size_t const Type_size = sizeof(struct Type) + Type_fields_count*sizeof(Field);
     struct Type* tmp_Type = (struct Type*)malloc(Type_size);
     *tmp_Type = (struct Type){
+        .super = Any,
         .align = alignof(struct Type),
         .min_size = sizeof(struct Type),
         .inlineable = false,
@@ -75,16 +55,12 @@ State::State(size_t heap_size, size_t stack_size_) :
         .fields_count = Type_fields_count,
         .fields = {}
     };
-    tmp_Type->fields[0] = (struct Field){ORef(tmp_USize), offsetof(struct Type, align)};
-    tmp_Type->fields[1] = (struct Field){ORef(tmp_USize), offsetof(struct Type, min_size)};
-    tmp_Type->fields[2] = (struct Field){ORef(tmp_Bool), offsetof(struct Type, inlineable)};
-    tmp_Type->fields[3] = (struct Field){ORef(tmp_Bool), offsetof(struct Type, is_bits)};
-    tmp_Type->fields[4] = (struct Field){ORef(tmp_Bool), offsetof(struct Type, has_indexed)};
 
-    size_t const Field_fields_count = 2;
+    size_t const Field_fields_count = 4;
     size_t const Field_size = sizeof(struct Type) + Field_fields_count*sizeof(Field);
     struct Type* const tmp_Field = (struct Type*)malloc(Field_size);
     *tmp_Field = (struct Type){
+        .super = Any,
         .align = alignof(struct Field),
         .min_size = sizeof(struct Field),
         .inlineable = true,
@@ -93,36 +69,35 @@ State::State(size_t heap_size, size_t stack_size_) :
         .fields_count = Field_fields_count,
         .fields = {}
     };
-    tmp_Field->fields[0] = (struct Field){ORef(tmp_USize), offsetof(struct Field, offset)};
-    tmp_Field->fields[1] = (struct Field){ORef(tmp_Type), offsetof(struct Field, type)};
-
-    tmp_Type->fields[5] = (struct Field){ORef(tmp_Field), offsetof(struct Type, fields)};
+    tmp_Type->fields[6] = (struct Field){ORef(tmp_Field), offsetof(struct Type, fields)};
 
 
     Type = ORef((struct Type*)heap.alloc_indexed(tmp_Type, Type_fields_count));
     Type.set_type(Type);
     *Type.data() = *tmp_Type;
-    std::copy(&tmp_Type->fields[0], &tmp_Type->fields[Type_fields_count], &Type.data()->fields[0]);
+    Type.data()->fields[6] = tmp_Type->fields[6];
 
     Field = ORef((struct Type*)heap.alloc_indexed(tmp_Type, Field_fields_count));
     Field.set_type(Type);
     *Field.data() = *tmp_Field;
-    std::copy(&tmp_Field->fields[0], &tmp_Field->fields[Field_fields_count], &Field.data()->fields[0]);
 
 
-    Int64 = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
-    *Int64.data() = (struct Type){
-        .align = alignof(int64_t),
-        .min_size = sizeof(int64_t),
-        .inlineable = true,
-        .is_bits = true,
+    size_t const Any_fields_count = 0;
+    Any = ORef((struct Type*)heap.alloc_indexed(Type.data(), Any_fields_count));
+    *Any.data() = (struct Type){
+        .super = Any, // FIXME
+        .align = 1,
+        .min_size = 0,
+        .inlineable = false,
+        .is_bits = false,
         .has_indexed = false,
-        .fields_count = 0,
+        .fields_count = Any_fields_count,
         .fields = {}
     };
 
     USize = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
     *USize.data() = (struct Type){
+        .super = Any,
         .align = alignof(size_t),
         .min_size = sizeof(size_t),
         .inlineable = true,
@@ -134,6 +109,7 @@ State::State(size_t heap_size, size_t stack_size_) :
 
     Bool = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
     *Bool.data() = (struct Type){
+        .super = Any,
         .align = alignof(bool),
         .min_size = sizeof(bool),
         .inlineable = true,
@@ -144,27 +120,43 @@ State::State(size_t heap_size, size_t stack_size_) :
     };
 
 
-    Type.data()->fields[0].type = ORef(USize);
-    Type.data()->fields[1].type = ORef(USize);
-    Type.data()->fields[2].type = ORef(Bool);
-    Type.data()->fields[3].type = ORef(Bool);
-    Type.data()->fields[4].type = ORef(Bool);
-    Type.data()->fields[5].type = ORef(Field);
+    Type.data()->super = Any;
+    Type.data()->fields[0] = (struct Field){Any, offsetof(struct Type, super)};
+    Type.data()->fields[1] = (struct Field){USize, offsetof(struct Type, align)};
+    Type.data()->fields[2] = (struct Field){USize, offsetof(struct Type, min_size)};
+    Type.data()->fields[3] = (struct Field){Bool, offsetof(struct Type, inlineable)};
+    Type.data()->fields[4] = (struct Field){Bool, offsetof(struct Type, is_bits)};
+    Type.data()->fields[5] = (struct Field){Bool, offsetof(struct Type, has_indexed)};
+    Type.data()->fields[6] = (struct Field){Field, offsetof(struct Type, fields)};
 
-    Field.data()->fields[0].type = ORef(USize);
-    Field.data()->fields[1].type = ORef(Type);
+    Field.data()->super = Any;
+    Field.data()->fields[0] = (struct Field){Type, offsetof(struct Field, type)};
+    Field.data()->fields[1] = (struct Field){USize, offsetof(struct Field, offset)};
+    Field.data()->fields[2] = (struct Field){USize, offsetof(struct Field, size)};
+    Field.data()->fields[3] = (struct Field){Bool, offsetof(struct Field, inlined)};
 
 
-    free(tmp_USize);
-    free(tmp_Bool);
     free(tmp_Type);
     free(tmp_Field);
 
 
     UInt8 = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
     *UInt8.data() = (struct Type){
+        .super = Any,
         .align = alignof(uint8_t),
         .min_size = sizeof(uint8_t),
+        .inlineable = true,
+        .is_bits = true,
+        .has_indexed = false,
+        .fields_count = 0,
+        .fields = {}
+    };
+
+    Int64 = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
+    *Int64.data() = (struct Type){
+        .super = Any,
+        .align = alignof(int64_t),
+        .min_size = sizeof(int64_t),
         .inlineable = true,
         .is_bits = true,
         .has_indexed = false,
@@ -175,6 +167,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     size_t const Symbol_fields_count = 2;
     Symbol = ORef((struct Type*)heap.alloc_indexed(Type.data(), Symbol_fields_count));
     *Symbol.data() = (struct Type){
+        .super = Any,
         .align = alignof(struct Symbol),
         .min_size = sizeof(struct Symbol),
         .inlineable = false,
@@ -186,21 +179,10 @@ State::State(size_t heap_size, size_t stack_size_) :
     Symbol.data()->fields[0] = (struct Field){ORef(USize), offsetof(struct Symbol, hash)};
     Symbol.data()->fields[1] = (struct Field){ORef(UInt8), offsetof(struct Symbol, name)};
 
-    size_t const Any_fields_count = 0;
-    Any = ORef((struct Type*)heap.alloc_indexed(Type.data(), Any_fields_count));
-    *Any.data() = (struct Type){
-        .align = 1,
-        .min_size = 0,
-        .inlineable = false,
-        .is_bits = false,
-        .has_indexed = false,
-        .fields_count = Any_fields_count,
-        .fields = {}
-    };
-
     size_t const Var_fields_count = 1;
     Var = ORef((struct Type*)heap.alloc_indexed(Type.data(), Var_fields_count));
     *Var.data() = (struct Type){
+        .super = Any,
         .align = alignof(struct Var),
         .min_size = sizeof(struct Var),
         .inlineable = false,
@@ -214,6 +196,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     size_t const Call_fields_count = 2;
     Call = ORef((struct Type*)heap.alloc_indexed(Type.data(), Call_fields_count));
     *Call.data() = (struct Type){
+        .super = Any,
         .align = alignof(struct Call),
         .min_size = sizeof(struct Call),
         .inlineable = false,
@@ -227,6 +210,7 @@ State::State(size_t heap_size, size_t stack_size_) :
 
     CodePtr = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
     *CodePtr.data() = (struct Type){
+        .super = Any,
         .align = alignof(kauno::fn::CodePtr),
         .min_size = sizeof(kauno::fn::CodePtr),
         .inlineable = true,
@@ -239,6 +223,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     size_t const Fn_fields_count = 1;
     Fn = ORef((struct Type*)heap.alloc_indexed(Type.data(), Fn_fields_count));
     *Fn.data() = (struct Type){
+        .super = Any,
         .align = alignof(kauno::fn::Fn),
         .min_size = sizeof(kauno::fn::Fn),
         .inlineable = true,

@@ -73,6 +73,7 @@ struct Field {
 };
 
 struct Type {
+    ORef<Type> super;
     size_t align;
     size_t min_size;
     bool inlineable;

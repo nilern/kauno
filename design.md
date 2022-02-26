@@ -3,12 +3,12 @@
 ## Types
 
     abstype Type {
-        super : Type;
+        super : Option<Type>;
         align : USize;
     };
 
     abstype AbstractType <: Type {
-        super : Type;
+        super : Option<Type>;
         align : USize;
         indexed fields : Field;
     };
@@ -21,12 +21,12 @@ cannot be inherited by a `BitsType`. Fielded abstract types cannot be instantiat
 any more than fieldless ones.
 
     abstype ConcreteType <: Type {
-        super : Type;
+        super : Option<Type>;
         align : USize;
     };
 
     record BitsType <: ConcreteType {
-        super : Type;
+        super : Option<Type>;
         align : USize;
         size : USize;
         inlineable : Bool;
@@ -35,12 +35,12 @@ any more than fieldless ones.
 `inlineable` is true if the bits are immutable (and not e.g. an opaque FFI struct in disguise).
 
     abstype CompositeType <: ConcreteType {
-        super : Type;
+        super : Option<Type>;
         align : USize;
     };
 
     record RecordType <: CompositeType {
-        super : Type;
+        super : Option<Type>;
         align : USize;
         size : USize;
         inlineable : Bool;
@@ -50,7 +50,7 @@ any more than fieldless ones.
 `inlineable` is true if there are no mutable fields.
 
     record IndexedRecordType <: CompositeType {
-        super : Type;
+        super : Option<Type>;
         align : USize;
         minSize : USize;
         indexed fields : Field;
