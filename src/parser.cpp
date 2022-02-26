@@ -11,6 +11,7 @@
 static inline Handle<Any> parse_callee(State* state, Lexer* lexer);
 static inline size_t parse_args(State* state, Lexer* lexer);
 
+// expr ::= callee args?
 static inline Handle<Any> parse_expr(State* state, Lexer* lexer) {
     Handle<Any> const callee = parse_callee(state, lexer);
 

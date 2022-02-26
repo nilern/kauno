@@ -1,5 +1,36 @@
 # Kauno Design
 
+## Grammar
+
+    expr ::= 'fn' '(' (param (',' param)*)? '->' expr
+           | call
+
+    call ::= callee '(' (expr (',' expr)*)? ')'
+           | callee
+
+    callee ::= '(' expr ')'
+             | VAR
+             | const
+
+    const ::= INT
+
+    param ::= VAR (':' expr)
+
+### LL(1) Grammar
+
+    expr ::= 'fn' '(' (param (',' param)*)? '->' expr
+           | call
+
+    call ::= callee ('(' (expr (',' expr)*)? ')')?
+
+    callee ::= '(' expr ')'
+             | VAR
+             | const
+
+    const ::= INT
+
+    param ::= VAR (':' expr)
+
 ## Types
 
     abstype Type {
