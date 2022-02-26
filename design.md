@@ -1,5 +1,43 @@
 # Kauno Design
 
+## Language Overview
+
+Dynamically typed functional-first language with
+
+* Modules
+    - Recursive modules
+* First-class functions with
+    - Arity and parameter type checking
+    - Type parameters (`pure<T = Option>()`) (Common Lisp (eql specializers), Julia (`Type{Int}`))
+    - Both mostly to facilitate use as multimethod methods
+* Multimethods with
+    - Templated methods (`forall T . get(v : Array<T>, i : USize)`) (Julia)
+* Types with
+    - Abstract, bits and composite types (Julia)
+    - Access-controllable (via modules) constructors and field accessors (Scheme)
+    - Data inlining (Project Valhalla)
+    - Optional indexed final field (C flexible struct member)
+* Multiple (return) values (Scheme, Lua)
+* Extensible effects / delimited continuations (Racket)
+* Hygienic macros (Scheme)
+
+no
+
+* Implicit conversions (bug-inducing)
+* Accepting more/less arguments than arity (bug-inducing)
+* Arity overloading or vararg functions (bug-inducing, possibly slow)
+* Method or field access by name from anywhere (abstraction-breaking, slow)
+* Inheritance from concrete types (abstraction-breaking, prevents data inlining)
+* Forward declarations (archaic and annoying)
+
+## Implementation Overview
+
+* Bytecode VM
+    - Bytecode more like Self than Lua 5
+    - Self-hosted bytecode compiler
+* Simple self-hosted method JIT
+* AST interpreter for bootstrapping
+
 ## Grammar
 
     expr ::= 'fn' '(' (param (',' param)*)? '->' expr
