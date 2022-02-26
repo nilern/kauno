@@ -46,7 +46,6 @@ public:
 
     ~State() {
         free(stack);
-        Globals_delete(&globals);
     }
 
     // HACK:
@@ -77,7 +76,7 @@ public:
 
     SymbolTable* symbols() { return &symbols_; }
 
-    struct Var* global(Handle<struct Symbol> name) { return Globals_find(&globals, name.oref()); }
+    struct Var* global(Handle<struct Symbol> name) { return globals.find(name.oref()); }
 
     void dump_stack(FILE* dest) {
         for (ORef<struct Any>* p = &stack[0]; p < sp; ++p) {

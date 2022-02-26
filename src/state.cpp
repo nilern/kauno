@@ -24,7 +24,7 @@ State::State(size_t heap_size, size_t stack_size_) :
 
     symbols_(),
 
-    globals(Globals_new()),
+    globals(),
 
     Type(ORef<struct Type>(nullptr)),
     Field(ORef<struct Type>(nullptr)),
@@ -238,7 +238,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     Handle<struct Type> const Type_handle = push(ORef(Type));
     Handle<struct Symbol> const Type_symbol = Symbol_new(this, "Type", 4);
     Handle<struct Var> const Type_var = Var_new(this, Type_handle.as_any());
-    Globals_insert(&globals, Type_symbol.oref(), Type_var.oref());
+    globals.insert(Type_symbol.oref(), Type_var.oref());
     popn(3);
 
     ORef<kauno::fn::Fn> const prn = ORef((kauno::fn::Fn*)heap.alloc(Fn.data()));
@@ -251,7 +251,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     Handle<kauno::fn::Fn> const prn_handle = push(ORef(prn));
     Handle<struct Symbol> const prn_symbol = Symbol_new(this, "prn", 3);
     Handle<struct Var> const prn_var = Var_new(this, prn_handle.as_any());
-    Globals_insert(&globals, prn_symbol.oref(), prn_var.oref());
+    globals.insert(prn_symbol.oref(), prn_var.oref());
     popn(3);
 }
 

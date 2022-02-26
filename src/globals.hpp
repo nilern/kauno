@@ -12,19 +12,40 @@ struct Var {
 
 static inline Handle<Var> Var_new(State* state, Handle<Any> value);
 
-struct Globals {
+class Globals {
     size_t count;
     size_t capacity;
     Symbol const** keys;
     Var** values;
+
+public:
+    Globals() : count(0), capacity(2) {
+        size_t const keys_size = sizeof(Symbol const*)*capacity;
+        keys = (Symbol const**)malloc(keys_size);
+        memset(keys, 0, keys_size);
+
+        size_t const values_size = sizeof(Var*)*capacity;
+        values = (Var**)malloc(values_size);
+        memset(values, 0, values_size);
+    }
+
+    Globals(Globals const&) = delete;
+    Globals& operator=(Globals const&) = delete;
+
+    Globals(Globals&&) = delete;
+    Globals& operator=(Globals&&) = delete;
+
+    ~Globals() {
+        free(keys);
+        free(values);
+    }
+
+    Var* find(ORef<Symbol> name) const;
+
+    void insert(ORef<Symbol> name, ORef<Var> var);
+
+private:
+    void rehash();
 };
-
-static inline Globals Globals_new();
-
-static inline void Globals_delete(Globals* globals);
-
-static inline Var* Globals_find(Globals const* globals, ORef<Symbol> name);
-
-static inline void Globals_insert(Globals* globals, ORef<Symbol> name, ORef<Var> var);
 
 #endif // GLOBALS_H
