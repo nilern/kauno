@@ -3,8 +3,8 @@
 #include <cstdlib>
 #include <cctype>
 
-static inline void Token_print(FILE* dest, Token tok) {
-    fprintf(dest, "<%s \"", TOKEN_NAMES[tok.type]);
+static inline void Token_print(FILE* dest, Lexer::Token tok) {
+    fprintf(dest, "<%s \"", Lexer::Token::NAMES[(size_t)tok.type]);
 
     for (size_t i = 0; i < tok.len; ++i) {
         fputc(tok.chars[i], dest);
@@ -23,7 +23,7 @@ static inline Lexer Lexer_new(char const* chars, size_t len) {
         .chars = chars,
         .end = chars + len,
         .first = {
-            .type = TOKEN_EOF,
+            .type = Lexer::Token::Type::TOKEN_EOF,
             .chars = chars,
             .len = 0,
             .span = {index, index}
@@ -37,8 +37,8 @@ static inline void Lexer_look_ahead(Lexer* lexer) {
         if (lexer->chars < lexer->end) {
             switch (*lexer->chars) {
             case '(': {
-                lexer->first = (Token){
-                    .type = TOKEN_LPAREN,
+                lexer->first = (Lexer::Token){
+                    .type = Lexer::Token::Type::LPAREN,
                     .chars = lexer->chars,
                     .len = 1,
                     .span = {lexer->index, lexer->index + 1}
@@ -46,8 +46,8 @@ static inline void Lexer_look_ahead(Lexer* lexer) {
                 return;
             }
             case ')': {
-                lexer->first = (Token){
-                    .type = TOKEN_RPAREN,
+                lexer->first = (Lexer::Token){
+                    .type = Lexer::Token::Type::RPAREN,
                     .chars = lexer->chars,
                     .len = 1,
                     .span = {lexer->index, lexer->index + 1}
@@ -56,8 +56,8 @@ static inline void Lexer_look_ahead(Lexer* lexer) {
             }
 
             case ',': {
-                lexer->first = (Token){
-                    .type = TOKEN_COMMA,
+                lexer->first = (Lexer::Token){
+                    .type = Lexer::Token::Type::COMMA,
                     .chars = lexer->chars,
                     .len = 1,
                     .span = {lexer->index, lexer->index + 1}
@@ -78,8 +78,8 @@ static inline void Lexer_look_ahead(Lexer* lexer) {
                         ++len;
                     }
 
-                    lexer->first = (Token){
-                        .type = TOKEN_VAR,
+                    lexer->first = (Lexer::Token){
+                        .type = Lexer::Token::Type::VAR,
                         .chars = tok_chars,
                         .len = len,
                         .span = {start, start + len - 1}
@@ -94,8 +94,8 @@ static inline void Lexer_look_ahead(Lexer* lexer) {
                         ++len;
                     }
 
-                    lexer->first = (Token){
-                        .type = TOKEN_INT,
+                    lexer->first = (Lexer::Token){
+                        .type = Lexer::Token::Type::INT,
                         .chars = tok_chars,
                         .len = len,
                         .span = {start, start + len - 1}
@@ -106,8 +106,8 @@ static inline void Lexer_look_ahead(Lexer* lexer) {
                 }
             }
         } else {
-            lexer->first = (Token){
-                .type = TOKEN_EOF,
+            lexer->first = (Lexer::Token){
+                .type = Lexer::Token::Type::TOKEN_EOF,
                 .chars = lexer->chars,
                 .len = 0,
                 .span = {lexer->index, lexer->index}
@@ -117,8 +117,8 @@ static inline void Lexer_look_ahead(Lexer* lexer) {
     }
 }
 
-static inline Token Lexer_peek(Lexer* lexer) {
-    if (lexer->first.type == TOKEN_EOF) {
+static inline Lexer::Token Lexer_peek(Lexer* lexer) {
+    if (lexer->first.type == Lexer::Token::Type::TOKEN_EOF) {
         Lexer_look_ahead(lexer);
     }
 
@@ -126,30 +126,30 @@ static inline Token Lexer_peek(Lexer* lexer) {
 }
 
 static inline void Lexer_next(Lexer* lexer) {
-    if (lexer->first.type == TOKEN_EOF) {
+    if (lexer->first.type == Lexer::Token::Type::TOKEN_EOF) {
         Lexer_look_ahead(lexer);
     }
 
     lexer->chars = lexer->first.chars + lexer->first.len;
     lexer->index = lexer->first.span.end;
-    lexer->first = (Token){
-        .type = TOKEN_EOF,
+    lexer->first = (Lexer::Token){
+        .type = Lexer::Token::Type::TOKEN_EOF,
         .chars = lexer->chars,
         .len = 0,
         .span = {lexer->index, lexer->index}
     };
 }
 
-static inline void Lexer_match(Lexer* lexer, TokenType type) {
-    if (lexer->first.type == TOKEN_EOF) {
+static inline void Lexer_match(Lexer* lexer, Lexer::Token::Type type) {
+    if (lexer->first.type == Lexer::Token::Type::TOKEN_EOF) {
         Lexer_look_ahead(lexer);
     }
 
     if (lexer->first.type == type) {
         lexer->chars = lexer->first.chars + lexer->first.len;
         lexer->index = lexer->first.span.end;
-        lexer->first = (Token){
-            .type = TOKEN_EOF,
+        lexer->first = (Lexer::Token){
+            .type = Lexer::Token::Type::TOKEN_EOF,
             .chars = lexer->chars,
             .len = 0,
             .span = {lexer->index, lexer->index}

@@ -15,7 +15,7 @@ static inline size_t parse_args(State* state, Lexer* lexer);
 static inline Handle<Any> parse_expr(State* state, Lexer* lexer) {
     Handle<Any> const callee = parse_callee(state, lexer);
 
-    if (Lexer_peek(lexer).type == TOKEN_LPAREN) {
+    if (Lexer_peek(lexer).type == Lexer::Token::Type::LPAREN) {
         size_t const argc = parse_args(state, lexer);
 
         Call* const call = (Call*)state->alloc_indexed(state->Call.data(), argc);
@@ -36,23 +36,23 @@ static inline Handle<Any> parse_expr(State* state, Lexer* lexer) {
 
 // callee ::= '(' expr ')' | VAR | INT
 static inline Handle<Any> parse_callee(State* state, Lexer* lexer) {
-    Token const tok = Lexer_peek(lexer);
+    Lexer::Token const tok = Lexer_peek(lexer);
 
     switch (tok.type) {
-    case TOKEN_LPAREN: {
+    case Lexer::Token::Type::LPAREN: {
         Lexer_next(lexer);
         Handle<Any> const expr = parse_expr(state, lexer);
-        Lexer_match(lexer, TOKEN_RPAREN);
+        Lexer_match(lexer, Lexer::Token::Type::RPAREN);
         return expr;
     }
 
-    case TOKEN_VAR: {
+    case Lexer::Token::Type::VAR: {
         Lexer_next(lexer);
 
         return Symbol_new(state, tok.chars, tok.len).template unchecked_cast<Any>();
     }
 
-    case TOKEN_INT: {
+    case Lexer::Token::Type::INT: {
         // FIXME: Bignums instead of overflow bugginess:
         // TODO: Return smallest possible type:
 
@@ -68,9 +68,9 @@ static inline Handle<Any> parse_callee(State* state, Lexer* lexer) {
         return state->push(ORef(data)).unchecked_cast<Any>();
     }
 
-    case TOKEN_RPAREN:
-    case TOKEN_COMMA:
-    case TOKEN_EOF: {}
+    case Lexer::Token::Type::RPAREN:
+    case Lexer::Token::Type::COMMA:
+    case Lexer::Token::Type::TOKEN_EOF: {}
     }
 
     exit(EXIT_FAILURE); // FIXME
@@ -80,15 +80,15 @@ static inline Handle<Any> parse_callee(State* state, Lexer* lexer) {
 static inline size_t parse_args(State* state, Lexer* lexer) {
     size_t argc = 0;
 
-    assert(Lexer_peek(lexer).type == TOKEN_LPAREN);
+    assert(Lexer_peek(lexer).type == Lexer::Token::Type::LPAREN);
     Lexer_next(lexer);
 
-    if (Lexer_peek(lexer).type != TOKEN_RPAREN) {
+    if (Lexer_peek(lexer).type != Lexer::Token::Type::RPAREN) {
         parse_expr(state, lexer);
         ++argc;
 
-        while (Lexer_peek(lexer).type != TOKEN_RPAREN) {
-            Lexer_match(lexer, TOKEN_COMMA);
+        while (Lexer_peek(lexer).type != Lexer::Token::Type::RPAREN) {
+            Lexer_match(lexer, Lexer::Token::Type::COMMA);
             parse_expr(state, lexer);
             ++argc;
         }

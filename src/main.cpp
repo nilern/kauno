@@ -17,8 +17,8 @@ int main(int argc, char* argv[]) {
         {
             Lexer lexer = Lexer_new(argv[1], strlen(argv[1]));
             while (true) {
-                Token const tok = Lexer_peek(&lexer);
-                if (tok.type != TOKEN_EOF) {
+                Lexer::Token const tok = Lexer_peek(&lexer);
+                if (tok.type != Lexer::Token::Type::TOKEN_EOF) {
                     Token_print(stdout, tok);
                     puts("");
                     Lexer_next(&lexer);
