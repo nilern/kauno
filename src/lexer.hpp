@@ -6,7 +6,8 @@
 
 #include "pos.hpp"
 
-struct Lexer {
+class Lexer {
+public:
     struct Token {
         enum class Type {
             LPAREN, RPAREN,
@@ -28,22 +29,38 @@ struct Lexer {
         char const* chars;
         size_t len;
         Span span;
+
+        void print(FILE* dest) const;
     };
 
+private:
     char const* chars;
     char const* end;
     Token first;
     size_t index;
+
+public:
+    Lexer(char const* chars_, size_t len_) :
+        chars(chars_),
+        end(chars_ + len_)
+    {
+        index = 0;
+        first = {
+            .type = Lexer::Token::Type::TOKEN_EOF,
+            .chars = chars,
+            .len = 0,
+            .span = {index, index}
+        };
+    }
+
+    Lexer::Token peek();
+
+    void next();
+
+    void match(Lexer::Token::Type type);
+
+private:
+    void look_ahead();
 };
-
-static inline void Token_print(FILE* dest, Lexer::Token tok);
-
-static inline Lexer Lexer_new(char const* chars, size_t len);
-
-static inline Lexer::Token Lexer_peek(Lexer* lexer);
-
-static inline void Lexer_next(Lexer* lexer);
-
-static inline void Lexer_match(Lexer* lexer, Lexer::Token::Type type);
 
 #endif // LEXER_H

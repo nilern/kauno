@@ -15,13 +15,13 @@ int main(int argc, char* argv[]) {
         State state(1024*1024, 1024*1024); // 1 MiB
 
         {
-            Lexer lexer = Lexer_new(argv[1], strlen(argv[1]));
+            Lexer lexer(argv[1], strlen(argv[1]));
             while (true) {
-                Lexer::Token const tok = Lexer_peek(&lexer);
+                Lexer::Token const tok = lexer.peek();
                 if (tok.type != Lexer::Token::Type::TOKEN_EOF) {
-                    Token_print(stdout, tok);
+                    tok.print(stdout);
                     puts("");
-                    Lexer_next(&lexer);
+                    lexer.next();
                 } else {
                     break;
                 }
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
 
         puts("\n---\n");
 
-        Lexer lexer = Lexer_new(argv[1], strlen(argv[1]));
+        Lexer lexer(argv[1], strlen(argv[1]));
         Handle<Any> const expr = parse_expr(&state, &lexer);
         State_print_builtin(&state, stdout, expr);
         puts("");
