@@ -2,16 +2,29 @@
 #define STATE_H
 
 #include <cstdio>
+#include <utility>
 
 #include "gc.hpp"
 #include "symbol.hpp"
 #include "globals.hpp"
 #include "ast.hpp"
 
-struct State {
+static inline void State_print_builtin(State const* state, FILE* dest, Handle<Any> value);
+
+class State {
     Heap heap;
 
+    ORef<struct Any>* sp;
+    size_t stack_size;
+    ORef<struct Any>* stack; // TODO: Growable ("infinite") stack
+
+    SymbolTable symbols_;
+
+    Globals globals;
+
+public:
     ORef<struct Type> Type;
+    ORef<struct Type> Field;
     ORef<struct Type> UInt8;
     ORef<struct Type> Int64;
     ORef<struct Type> USize;
@@ -23,42 +36,58 @@ struct State {
     ORef<struct Type> CodePtr;
     ORef<struct Type> Fn;
 
-    SymbolTable symbols;
+    State(size_t heap_size, size_t stack_size);
 
-    Globals globals;
+    State(State&& semi) = delete;
+    State& operator=(State&& semi) = delete;
 
-    ORef<struct Any>* sp;
-    size_t stack_size;
-    ORef<struct Any>* stack; // TODO: Growable ("infinite") stack
+    State(State const& semi) = delete;
+    State& operator=(State const& semi) = delete;
+
+    ~State() {
+        free(stack);
+        SymbolTable_delete(&symbols_);
+        Globals_delete(&globals);
+    }
+
+    // HACK:
+    void* alloc(struct Type* type) { return heap.alloc(type); }
+    void* alloc_indexed(struct Type* type, size_t indexed_count) { return heap.alloc_indexed(type, indexed_count); }
+
+    template<typename T>
+    Handle<T> push(ORef<T> value) {
+        ORef<struct Any>* const old_sp = sp;
+        ORef<struct Any>* const new_sp = old_sp + 1;
+        if (new_sp >= (ORef<struct Any>*)((char*)&stack + stack_size)) { exit(EXIT_FAILURE); } // FIXME
+        *old_sp = value.as_any();
+        sp = new_sp;
+        return Handle(old_sp).template unchecked_cast<T>();
+    }
+
+    Handle<struct Any> peek();
+
+    Handle<struct Any> peek_nth(size_t n);
+
+    ORef<struct Any>* peekn(size_t n);
+
+    void pop();
+
+    void popn(size_t n);
+
+    void pop_nth(size_t n);
+
+    SymbolTable* symbols() { return &symbols_; }
+
+    struct Var* global(Handle<struct Symbol> name) { return Globals_find(&globals, name.oref()); }
+
+    void dump_stack(FILE* dest) {
+        for (ORef<struct Any>* p = &stack[0]; p < sp; ++p) {
+            fprintf(dest, "[%zd] = ", sp - p);
+            State_print_builtin(this, dest, Handle(p));
+            fputs("\n", dest);
+        }
+    }
 };
-
-static inline State State_new(size_t heap_size, size_t stack_size);
-
-static inline void State_delete(State* state);
-
-template<typename T>
-static inline Handle<T> State_push(State* state, ORef<T> value) {
-    ORef<Any>* const sp = state->sp;
-    ORef<Any>* const new_sp = sp + 1;
-    if (new_sp >= (ORef<Any>*)((char*)state + state->stack_size)) { exit(EXIT_FAILURE); } // FIXME
-    *sp = value.as_any();
-    state->sp = new_sp;
-    return Handle(sp).template unchecked_cast<T>();
-}
-
-static inline Handle<Any> State_peek(State* state);
-
-static inline Handle<Any> State_peek_nth(State* state, size_t n);
-
-static inline ORef<Any>* State_peekn(State* state, size_t n);
-
-static inline void State_pop(State* state);
-
-static inline void State_popn(State* state, size_t n);
-
-static inline void State_pop_nth(State* state, size_t n);
-
-static inline void State_print_builtin(State const* state, FILE* dest, Handle<Any> value);
 
 template<typename T, typename F>
 ORef<F> obj_field(State* state, Handle<T> handle, size_t index) {
@@ -72,7 +101,7 @@ ORef<F> obj_field(State* state, Handle<T> handle, size_t index) {
     Field const field = type->fields[index];
 
     if (field.inlined) {
-        F* const field_obj = state->heap.alloc(field.type.data());
+        F* const field_obj = state->alloc(field.type.data());
         obj = Handle_oref(handle); // Reload after potential collection
         memcpy(field_obj, (void*)((char*)obj_data(obj) + field.offset), field.size);
         return ORef(field_obj);

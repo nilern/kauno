@@ -3,12 +3,16 @@
 
 #include "object.hpp"
 
-struct State;
+class State;
+
+namespace kauno::fn {
 
 typedef Handle<Any> (*CodePtr)(State* state);
 
 struct Fn {
     CodePtr code;
 };
+
+}
 
 #endif // FN_HPP

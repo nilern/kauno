@@ -12,7 +12,7 @@
 
 int main(int argc, char* argv[]) {
     if (argc == 2) {
-        State state = State_new(1024*1024, 1024*1024); // 1 MiB
+        State state(1024*1024, 1024*1024); // 1 MiB
 
         {
             Lexer lexer = Lexer_new(argv[1], strlen(argv[1]));
@@ -40,10 +40,6 @@ int main(int argc, char* argv[]) {
         Handle<Any> const value = eval(&state);
         State_print_builtin(&state, stdout, value);
         puts("");
-
-        State_pop(&state);
-
-        State_delete(&state);
 
         return EXIT_SUCCESS;
     } else {

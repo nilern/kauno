@@ -6,9 +6,9 @@
 #include "symbol.hpp"
 
 static inline Handle<Var> Var_new(State* state, Handle<Any> value) {
-    Var* var = (Var*)state->heap.alloc(state->Var.data());
+    Var* var = (Var*)state->alloc(state->Var.data());
     *var = (Var){.value = value.oref()};
-    return State_push(state, ORef(var));
+    return state->push(ORef(var));
 }
 
 static inline Globals Globals_new() {

@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <cstdlib>
 
-struct State;
+class State;
 
 struct Header {
     uintptr_t bits;

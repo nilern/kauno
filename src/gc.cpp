@@ -72,23 +72,23 @@ static inline ORef<T> mark(Heap*, ORef<T> obj) {
     return obj;
 }
 
-static inline char* scan_field(State* state, ORef<Type> field_type, char* data);
+static inline char* scan_field(Heap* heap, ORef<Type> field_type, char* data);
 
 // Returns the address immediately after the object data.
-static inline char* scan_fields(State* state, Type* type, char* data) {
+static inline char* scan_fields(Heap* heap, Type* type, char* data) {
     if (!type->is_bits) {
         char* scan = data;
 
         if (!type->has_indexed) {
             for (size_t i = 0; i < type->fields_count; ++i) {
-                scan = scan_field(state, type->fields[i].type, data + type->fields[i].offset);
+                scan = scan_field(heap, type->fields[i].type, data + type->fields[i].offset);
             }
         } else {
             size_t lasti = type->fields_count - 1;
 
             // Non-indexed fields:
             for (size_t i = 0; i < lasti; ++i) {
-                scan_field(state, type->fields[i].type, data + type->fields[i].offset);
+                scan_field(heap, type->fields[i].type, data + type->fields[i].offset);
             }
 
             // Elements of indexed field:
@@ -98,7 +98,7 @@ static inline char* scan_fields(State* state, Type* type, char* data) {
             size_t const indexed_count = *indexed_data;
             char* indexed_fields = (char*)(indexed_data + 1);
             for (size_t i = 0; i < indexed_count; ++i) {
-                scan = scan_field(state, indexed_type, indexed_fields + indexed_elem_size * i);
+                scan = scan_field(heap, indexed_type, indexed_fields + indexed_elem_size * i);
             }
         }
 
@@ -110,20 +110,20 @@ static inline char* scan_fields(State* state, Type* type, char* data) {
 }
 
 // Returns the address immediately after the field data.
-static inline char* scan_field(State* state, ORef<Type> field_type, char* field) {
+static inline char* scan_field(Heap* heap, ORef<Type> field_type, char* field) {
     Type* const type = field_type.data();
     if (type->inlineable) {
         // Scan inlined fields:
-        return scan_fields(state, type, field);
+        return scan_fields(heap, type, field);
     } else {
         // Mark field:
         ORef<Any>* const oref = (ORef<Any>*)field;
-        *oref = mark(&state->heap, *oref);
+        *oref = mark(heap, *oref);
         return (char*)(oref + 1);
     }
 }
 
-void Heap::collect(State* state) {
+void Heap::collect() {
     // TODO: Mark roots
 
     // Copy live objects:
@@ -133,8 +133,8 @@ void Heap::collect(State* state) {
         if (!granule_eq(*(Granule*)scan, ALIGNMENT_HOLE)) {
             // Scan object:
             ORef<Any> const oref = ORef((Any*)scan);
-            oref.set_type(mark(&state->heap, ORef(oref.type()))); // mark type
-            uintptr_t const addr = (uintptr_t)(void*)scan_fields(state, oref.type().data(), (char*)oref.data()); // scan fields
+            oref.set_type(mark(this, ORef(oref.type()))); // mark type
+            uintptr_t const addr = (uintptr_t)(void*)scan_fields(this, oref.type().data(), (char*)oref.data()); // scan fields
             scan = (char*)(void*)((addr + alignof(Granule) - 1) & ~(alignof(Granule) - 1));
         } else {
             // Skip alignment hole:

@@ -5,8 +5,6 @@
 
 #include "object.hpp"
 
-struct State;
-
 struct Granule {
     uintptr_t bits;
 };
@@ -58,7 +56,7 @@ public:
     void* alloc(Type* type);
     void* alloc_indexed(Type* type, size_t indexed_count);
 
-    void collect(State* state);
+    void collect();
 };
 
 #endif // GC_H

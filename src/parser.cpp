@@ -17,17 +17,17 @@ static inline Handle<Any> parse_expr(State* state, Lexer* lexer) {
     if (Lexer_peek(lexer).type == TOKEN_LPAREN) {
         size_t const argc = parse_args(state, lexer);
 
-        Call* const call = (Call*)state->heap.alloc_indexed(state->Call.data(), argc);
+        Call* const call = (Call*)state->alloc_indexed(state->Call.data(), argc);
         *call = (Call){
             .callee = callee.oref(),
             .args_count = argc,
             .args = {}
         };
-        ORef<Any>* const args = State_peekn(state, argc);
+        ORef<Any>* const args = state->peekn(argc);
         std::copy(args, args + argc, &call->args[0]);
 
-        State_popn(state, argc + 1);
-        return State_push(state, ORef(call)).template unchecked_cast<Any>();
+        state->popn(argc + 1);
+        return state->push(ORef(call)).template unchecked_cast<Any>();
     } else {
         return callee;
     }
@@ -62,9 +62,9 @@ static inline Handle<Any> parse_callee(State* state, Lexer* lexer) {
             n = 10*n + (tok.chars[i] - '0');
         }
 
-        int64_t* data = (int64_t*)state->heap.alloc(state->Int64.data());
+        int64_t* data = (int64_t*)state->alloc(state->Int64.data());
         *data = n;
-        return State_push(state, ORef(data)).template unchecked_cast<Any>();
+        return state->push(ORef(data)).unchecked_cast<Any>();
     }
 
     case TOKEN_RPAREN:
