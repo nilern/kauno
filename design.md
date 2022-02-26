@@ -23,6 +23,7 @@ Dynamically typed functional-first language with
 
 no
 
+* Classical or prototypical OO (complecting)
 * Implicit conversions (bug-inducing)
 * Accepting more/less arguments than arity (bug-inducing)
 * Arity overloading or vararg functions (bug-inducing, possibly slow)
