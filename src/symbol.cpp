@@ -1,7 +1,6 @@
 #include "symbol.hpp"
 
 #include <cstdlib>
-#include <cstring>
 
 #if __WORDSIZE == 64
 size_t const FNV_PRIME = 1099511628211u;
@@ -18,29 +17,15 @@ static inline size_t Symbol_hash(char const* name, size_t name_size) {
     return hash;
 }
 
-static inline SymbolTable SymbolTable_new() {
-    size_t const capacity = 2;
-
-    size_t const symbols_size = sizeof(Symbol*)*capacity;
-    Symbol** const symbols = (Symbol**)malloc(symbols_size);
-    memset(symbols, 0, symbols_size);
-
-    return (SymbolTable){
-        .count = 0,
-        .capacity = capacity,
-        .symbols = symbols
-    };
-}
-
-static inline void SymbolTable_rehash(SymbolTable* symbols) {
-    size_t const new_capacity = symbols->capacity*2;
+void SymbolTable::rehash() {
+    size_t const new_capacity = capacity*2;
 
     size_t const symbols_size = sizeof(Symbol*)*new_capacity;
     Symbol** const new_symbols = (Symbol**)malloc(symbols_size);
     memset(new_symbols, 0, symbols_size);
 
-    for (size_t i = 0; i < symbols->capacity; ++i) {
-        Symbol* const symbol = symbols->symbols[i];
+    for (size_t i = 0; i < capacity; ++i) {
+        Symbol* const symbol = symbols[i];
 
         if (symbol) {
             size_t const hash = symbol->hash;
@@ -55,13 +40,9 @@ static inline void SymbolTable_rehash(SymbolTable* symbols) {
         }
     }
 
-    symbols->capacity = new_capacity;
-    free(symbols->symbols);
-    symbols->symbols = new_symbols;
-}
-
-static inline void SymbolTable_delete(SymbolTable* symbols) {
-    free(symbols->symbols);
+    capacity = new_capacity;
+    free(symbols);
+    symbols = new_symbols;
 }
 
 static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t name_size) {
@@ -75,7 +56,7 @@ static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t n
 
             if (!isymbol) { // Not found
                 if ((symbols->count + 1) * 2 > symbols->capacity) { // New load factor > 0.5
-                    SymbolTable_rehash(symbols);
+                    symbols->rehash();
                     break; // continue outer loop
                 } else {
                     // Construct:

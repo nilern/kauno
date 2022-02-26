@@ -22,7 +22,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     stack_size(stack_size_),
     stack((ORef<struct Any>*)malloc(stack_size_)),
 
-    symbols_(SymbolTable_new()),
+    symbols_(),
 
     globals(Globals_new()),
 

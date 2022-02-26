@@ -46,7 +46,6 @@ public:
 
     ~State() {
         free(stack);
-        SymbolTable_delete(&symbols_);
         Globals_delete(&globals);
     }
 
