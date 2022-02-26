@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
+#include <algorithm>
 
 #include "state.hpp"
 #include "ast.hpp"
@@ -22,9 +23,8 @@ static inline Handle<Any> parse_expr(State* state, Lexer* lexer) {
             .args_count = argc,
             .args = {}
         };
-        if (argc > 0) {
-            memcpy(&call->args, State_peek_nth(state, argc - 1).oref_ptr(), sizeof(ORef<Any>)*argc);
-        }
+        ORef<Any>* const args = State_peekn(state, argc);
+        std::copy(args, args + argc, &call->args[0]);
 
         State_popn(state, argc + 1);
         return State_push(state, ORef(call)).template unchecked_cast<Any>();

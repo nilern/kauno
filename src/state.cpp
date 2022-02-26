@@ -285,6 +285,11 @@ static inline Handle<Any> State_peek_nth(State* state, size_t n) {
     return Handle(state->sp - 1 - n);
 }
 
+static inline ORef<Any>* State_peekn(State* state, size_t n) {
+    assert(state->sp - n >= &state->stack[0]);
+    return state->sp - n;
+}
+
 static inline void State_pop(State* state) {
     assert(state->sp > &state->stack[0]);
     --state->sp;

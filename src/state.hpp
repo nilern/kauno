@@ -50,6 +50,8 @@ static inline Handle<Any> State_peek(State* state);
 
 static inline Handle<Any> State_peek_nth(State* state, size_t n);
 
+static inline ORef<Any>* State_peekn(State* state, size_t n);
+
 static inline void State_pop(State* state);
 
 static inline void State_popn(State* state, size_t n);
