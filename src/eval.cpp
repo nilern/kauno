@@ -35,8 +35,12 @@ static inline Handle<Any> eval(State* state) {
         if (callee.type() == state->Fn) {
             Handle<kauno::fn::Fn> const fn = callee.unchecked_cast<kauno::fn::Fn>();
 
-            // FIXME: Check arity & arg types
-            return fn.data()->code(state); // TODO: TCO
+            if (argc == fn.data()->domain_count) {
+                // FIXME: Check arg types
+                return fn.data()->code(state); // TODO: TCO
+            } else {
+                exit(EXIT_FAILURE); // FIXME
+            }
         } else {
             exit(EXIT_FAILURE); // FIXME
         }

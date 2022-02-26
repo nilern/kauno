@@ -257,7 +257,12 @@ State::State(size_t heap_size, size_t stack_size_) :
     popn(3);
 
     ORef<kauno::fn::Fn> const prn = ORef((kauno::fn::Fn*)heap.alloc(Fn.data()));
-    *prn.data() = (kauno::fn::Fn){.code = builtin_prn};
+    *prn.data() = (kauno::fn::Fn){
+        .code = builtin_prn,
+        .domain_count = 1,
+        .domain = {}
+    };
+    prn.data()->domain[0] = Any;
     Handle<kauno::fn::Fn> const prn_handle = push(ORef(prn));
     Handle<struct Symbol> const prn_symbol = Symbol_new(this, "prn", 3);
     Handle<struct Var> const prn_var = Var_new(this, prn_handle.as_any());
@@ -300,7 +305,9 @@ static inline void State_print_builtin(State const* state, FILE* dest, Handle<An
     ORef<Type> type = value.type();
     void* data = value.data();
     if (type == state->Type) {
-        fputs("<Type>", dest);
+        fprintf(dest, "<Type @ %p>", data);
+    } else if (type == state->Field) {
+        fprintf(dest, "<Field @ %p>", data);
     } else if (type == state->Symbol) {
         Symbol* symbol = (Symbol*)data;
 
@@ -312,6 +319,10 @@ static inline void State_print_builtin(State const* state, FILE* dest, Handle<An
         fputs("<Var>", dest);
     } else if (type == state->Call) {
         fprintf(dest, "<Call @ %p>", data);
+    } else if (type == state->Fn) {
+        fprintf(dest, "<Fn @ %p>", data);
+    } else if (type == state->CodePtr) {
+        fprintf(dest, "<CodePtr @ %p>", data);
     } else if (type == state->UInt8) {
         fprintf(dest, "%u", *(uint8_t*)data);
     } else if (type == state->Int64) {

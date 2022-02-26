@@ -11,6 +11,8 @@ typedef Handle<Any> (*CodePtr)(State* state);
 
 struct Fn {
     CodePtr code;
+    size_t domain_count;
+    ORef<Type> domain[0];
 };
 
 }
