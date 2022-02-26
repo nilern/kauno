@@ -12,7 +12,7 @@ void Lexer::Token::print(FILE* dest) const {
 
     fputs("\" @ ", dest);
 
-    Span_print(dest, span);
+    span.print(dest);
 
     fputc('>', dest);
 }

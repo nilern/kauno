@@ -7,8 +7,8 @@
 struct Span {
     size_t start;
     size_t end;
-};
 
-static inline void Span_print(FILE* dest, Span span);
+    void print(FILE* dest) const;
+};
 
 #endif // POS_H

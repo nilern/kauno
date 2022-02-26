@@ -1,5 +1,5 @@
 #include "pos.hpp"
 
-static inline void Span_print(FILE* dest, Span span) {
-    fprintf(dest, "%lu - %lu", span.start, span.end);
+void Span::print(FILE* dest) const {
+    fprintf(dest, "%lu - %lu", start, end);
 }
