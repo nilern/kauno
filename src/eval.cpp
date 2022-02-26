@@ -11,12 +11,12 @@ static inline Handle<Any> eval(State* state) {
         Handle<Symbol> const symbol = expr.unchecked_cast<Symbol>();
 
         Var* var = state->global(symbol);
-        if (var) {
-            state->pop();
-            return state->push(var->value);
-        } else {
+        if (!var) {
             exit(EXIT_FAILURE); // FIXME
         }
+
+        state->pop();
+        return state->push(var->value);
     } else if (expr.type() == state->Call) {
         Handle<Call> const call = expr.unchecked_cast<Call>();
 
@@ -35,12 +35,17 @@ static inline Handle<Any> eval(State* state) {
         if (callee.type() == state->Fn) {
             Handle<kauno::fn::Fn> const fn = callee.unchecked_cast<kauno::fn::Fn>();
 
-            if (argc == fn.data()->domain_count) {
-                // FIXME: Check arg types
-                return fn.data()->code(state); // TODO: TCO
-            } else {
+            if (argc != fn.data()->domain_count) {
                 exit(EXIT_FAILURE); // FIXME
             }
+
+            for (size_t i = 0; i < argc; ++i) {
+                if (!state->peek_nth(argc - 1 - i).is_instance(fn.data()->domain[i])) {
+                    exit(EXIT_FAILURE); // FIXME
+                }
+            }
+
+            return fn.data()->code(state); // TODO: TCO
         } else {
             exit(EXIT_FAILURE); // FIXME
         }

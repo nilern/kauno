@@ -36,6 +36,10 @@ public:
 
     bool operator==(ORef<T> other) const { return ptr_ == other.ptr_; }
 
+    bool operator!=(ORef<T> other) const { return ptr_ != other.ptr_; }
+
+    bool is_instance(ORef<Type> super) const;
+
     template<typename U>
     ORef<U> unchecked_cast() const { return ORef<U>((U*)ptr_); }
 
@@ -56,6 +60,8 @@ public:
     ORef<Type> type() const { return oref().type(); }
 
     T* data() const { return oref().data(); }
+
+    bool is_instance(ORef<Type> super) const { return oref_ptr_->is_instance(super); }
 
     template<typename U>
     Handle<U> unchecked_cast() const { return Handle<U>((ORef<U>*)oref_ptr_); }
@@ -82,6 +88,20 @@ struct Type {
     size_t fields_count; // if is_bits then byte count else field_types count
     Field fields[0];
 };
+
+template<typename T>
+bool ORef<T>::is_instance(ORef<Type> super) const {
+    ORef<Type> t = type();
+
+    while (true) {
+        if (t == super) { return true; }
+
+        // FIXME: non-obvious due to Any.super == Any:
+        ORef<Type> const t_ = t.data()->super;
+        if (t_ == t) { return false; }
+        t = t_;
+    }
+}
 
 Field::Field(ORef<Type> type_, size_t offset_)
     : type(type_), offset(offset_),
