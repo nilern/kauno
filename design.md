@@ -2,27 +2,47 @@
 
 ## Types
 
-    abstype Type;
+    abstype Type {
+        super : Type;
+        align : USize;
+    };
 
-    abstype AbstractType <: Type;
+    abstype AbstractType <: Type {
+        super : Type;
+        align : USize;
+        indexed fields : Field;
+    };
 
-Abstract types are never inlineable because their subtypes can have differing sizes.
+Abstract types cannot be instantiated and are never inlineable because their subtypes can have
+differing sizes.
 
-    abstype ConcreteType <: Type;
+Abstract types can have fields and an alignment requirement. If an abstract type has fields, it
+cannot be inherited by a `BitsType`. Fielded abstract types cannot be instantiated or inlined
+any more than fieldless ones.
+
+    abstype ConcreteType <: Type {
+        super : Type;
+        align : USize;
+    };
 
     record BitsType <: ConcreteType {
-        size : USize;
+        super : Type;
         align : USize;
+        size : USize;
         inlineable : Bool;
     };
 
 `inlineable` is true if the bits are immutable (and not e.g. an opaque FFI struct in disguise).
 
-    abstype CompositeType <: ConcreteType;
+    abstype CompositeType <: ConcreteType {
+        super : Type;
+        align : USize;
+    };
 
     record RecordType <: CompositeType {
-        size : USize;
+        super : Type;
         align : USize;
+        size : USize;
         inlineable : Bool;
         indexed fields : Field;
     };
@@ -30,8 +50,9 @@ Abstract types are never inlineable because their subtypes can have differing si
 `inlineable` is true if there are no mutable fields.
 
     record IndexedRecordType <: CompositeType {
-        minSize : USize;
+        super : Type;
         align : USize;
+        minSize : USize;
         indexed fields : Field;
     };
 
