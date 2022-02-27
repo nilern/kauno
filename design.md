@@ -7,13 +7,13 @@ Dynamically typed functional-first language with
 * Modules
     - Recursive modules
 * First-class functions with
-    - Arity and parameter type checking
-    - Type parameters (`pure<T = Option>()`) (Common Lisp (eql specializers), Julia (`Type{Int}`))
-    - Both mostly to facilitate use as multimethod methods
+    - Arity and parameter type checking (mostly to facilitate use as multimethod methods)
 * Multimethods with
+    - Type parameters (`pure<T = Option>()`) (Common Lisp (eql specializers), Julia (`Type{Int}`))
     - Templated methods (`forall T . get(v : Array<T>, i : USize)`) (Julia)
+* Dynamic type classes (built on top of multimethods)
 * Types with
-    - Abstract, bits and composite types (Julia)
+    - Both composite and bits types (Julia)
     - Access-controllable (via modules) constructors and field accessors (Scheme)
     - Data inlining (Project Valhalla)
     - Optional indexed final field (C flexible struct member)
@@ -30,6 +30,7 @@ no
 * Method or field access by name from anywhere (abstraction-breaking, slow)
 * Inheritance from concrete types (abstraction-breaking, prevents data inlining)
 * Forward declarations (archaic and annoying)
+* Subtyping and overriding
 
 ## Implementation Overview
 
@@ -73,12 +74,10 @@ no
 ## Types
 
     abstype Type {
-        super : Option<Type>;
         align : USize;
     };
 
     abstype AbstractType <: Type {
-        super : Option<Type>;
         align : USize;
         indexed fields : Field;
     };
@@ -91,12 +90,10 @@ cannot be inherited by a `BitsType`. Fielded abstract types cannot be instantiat
 any more than fieldless ones.
 
     abstype ConcreteType <: Type {
-        super : Option<Type>;
         align : USize;
     };
 
     record BitsType <: ConcreteType {
-        super : Option<Type>;
         align : USize;
         size : USize;
         inlineable : Bool;
@@ -105,12 +102,10 @@ any more than fieldless ones.
 `inlineable` is true if the bits are immutable (and not e.g. an opaque FFI struct in disguise).
 
     abstype CompositeType <: ConcreteType {
-        super : Option<Type>;
         align : USize;
     };
 
     record RecordType <: CompositeType {
-        super : Option<Type>;
         align : USize;
         size : USize;
         inlineable : Bool;
@@ -120,7 +115,6 @@ any more than fieldless ones.
 `inlineable` is true if there are no mutable fields.
 
     record IndexedRecordType <: CompositeType {
-        super : Option<Type>;
         align : USize;
         minSize : USize;
         indexed fields : Field;
