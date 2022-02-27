@@ -150,5 +150,5 @@ A parameterized type (= type constructor) is a template to concrete types.
 
 Its constructor is a multimethod with a single method templated with the type constructor parameters.
 
-Field accessors for parameterized types normal acessors; the accessee is of an instantiated type
+Field accessors for parameterized types are normal acessors; the accessee is of an instantiated type
 and that type contains the specialized `Field`s.
