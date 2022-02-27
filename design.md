@@ -73,58 +73,25 @@ no
 
 ## Types
 
-    abstype Type {
-        align : USize;
-    };
-
-    abstype AbstractType <: Type {
-        align : USize;
-        indexed fields : Field;
-    };
-
-Abstract types cannot be instantiated and are never inlineable because their subtypes can have
-differing sizes.
-
-Abstract types can have fields and an alignment requirement. If an abstract type has fields, it
-cannot be inherited by a `BitsType`. Fielded abstract types cannot be instantiated or inlined
-any more than fieldless ones.
-
-    abstype ConcreteType <: Type {
-        align : USize;
-    };
-
-    record BitsType <: ConcreteType {
-        align : USize;
-        size : USize;
-        inlineable : Bool;
-    };
-
-`inlineable` is true if the bits are immutable (and not e.g. an opaque FFI struct in disguise).
-
-    abstype CompositeType <: ConcreteType {
-        align : USize;
-    };
-
-    record RecordType <: CompositeType {
-        align : USize;
-        size : USize;
-        inlineable : Bool;
-        indexed fields : Field;
-    };
-
-`inlineable` is true if there are no mutable fields.
-
-    record IndexedRecordType <: CompositeType {
+    record Type {
         align : USize;
         minSize : USize;
+        isBits : Bool;
+        mutable : Bool;
+        inlineable : Bool;
         indexed fields : Field;
-    };
+    }
 
-Indexed record types are never inlineable because their size depends on the count of indexed elements.
+`mutable` is true if there are mutable fields or `isBits` and the bits are mutable
+(e.g. an opaque FFI struct in disguise).
 
-The last field is the indexed one. Surface syntax will make it possible to have any single field be
-indexed, but the runtime lays it out last. Fields will be otherwise reordered for efficiency too,
-except for FFI where the foreign layout obviously has to be matched exactly.
+`inlineable` is true if `mutable` is false (updates could not be propagated to all copies efficiently)
+and there are no indexed (instances differ in size) fields.
+
+Any single field can be indexed, but the runtime lays it out last. Fields will be otherwise reordered
+for efficiency too (minimizing alignment padding), except for FFI where the foreign layout obviously
+has to be matched exactly. For parameterized types the layout order may differ by instance type but
+the order of `fields` will not.
 
     record Field {
         type : Type;
@@ -132,11 +99,12 @@ except for FFI where the foreign layout obviously has to be matched exactly.
         size : USize;
         inlined : Bool;
         mutable : Bool;
+        indexed : Bool;
     };
 
-`size` is just copied from `type` to reduce indirection.
+`type` is null (and `inlined` false) for polymorphic fields.
 
-`inlined` is true if `type` is inlineable.
+Otherwise `size` and `inlined` are just copied from `type` to reduce indirection.
 
 While mutable types may not be inlined, types may be inlined into mutable fields.
 
@@ -146,7 +114,7 @@ Instead of by name, fields are accessed via accessor values, which can be module
 like any value.
 
     record FieldAccessor {
-        type : CompositeType
+        type : Type
         index : USize;
     }
 
