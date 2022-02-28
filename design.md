@@ -24,12 +24,14 @@ Dynamically typed functional-first language with
 no
 
 * Classical or prototypical OO (complecting)
+* Pointer equality (low-level, prevents data inlining)
 * Implicit conversions (bug-inducing)
 * Accepting more/less arguments than arity (bug-inducing)
 * Arity overloading or vararg functions (bug-inducing, possibly slow)
 * Method or field access by name from anywhere (abstraction-breaking, slow)
 * Inheritance from concrete types (abstraction-breaking, prevents data inlining)
 * Forward declarations (archaic and annoying)
+* Importing everything in a module (hard to follow for both programmers and compilers)
 * Subtyping and overriding
 
 ## Implementation Overview
