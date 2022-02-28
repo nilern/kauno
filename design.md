@@ -44,10 +44,11 @@ no
 
 ## Grammar
 
-    expr ::= 'fn' '(' (param (',' param)*)? '->' expr
+    expr ::= 'fn' typeArgs? params '->' expr
            | call
 
-    call ::= callee '(' (expr (',' expr)*)? ')'
+    call ::= callee typeArgs? args
+           | callee typeArgs
            | callee
 
     callee ::= '(' expr ')'
@@ -56,14 +57,22 @@ no
 
     const ::= INT
 
-    param ::= VAR (':' expr)
+    type ::= expr
+
+    typeArgs ::= '{' type (',' type)* '}'
+
+    params ::= '(' (param (',' param)*)? ')'
+
+    param ::= VAR (':' type)
+
+    args ::= '(' (expr (',' expr)*)? ')'
 
 ### LL(1) Grammar
 
-    expr ::= 'fn' '(' (param (',' param)*)? '->' expr
+    expr ::= 'fn' typeArgs? params '->' expr
            | call
 
-    call ::= callee ('(' (expr (',' expr)*)? ')')?
+    call ::= callee typeArgs? args?
 
     callee ::= '(' expr ')'
              | VAR
@@ -71,7 +80,15 @@ no
 
     const ::= INT
 
-    param ::= VAR (':' expr)
+    type ::= expr
+
+    typeArgs ::= '{' type (',' type)* '}'
+
+    params ::= '(' (param (',' param)*)? ')'
+
+    param ::= VAR (':' type)
+
+    args ::= '(' (expr (',' expr)*)? ')'
 
 ## Templates
 
