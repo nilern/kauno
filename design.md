@@ -75,7 +75,7 @@ no
 
 ## Templates
 
-A template of arity *n* is a memoized function from type sequences of length *n* to values.
+A template of arity *n* is a pure function from type sequences of length *n* to values.
 
 ## Dispatchers
 
@@ -136,7 +136,7 @@ Instead of by name, fields are accessed via accessor values, which can be module
 like any value.
 
     record FieldAccessor {
-        type : Type
+        type : Set{Type}
         index : USize;
     }
 
@@ -148,9 +148,10 @@ all immutable.
 
 ## Parameterized Types
 
-A parameterized type (= type constructor) is a template to concrete types.
+A parameterized type (= type constructor) is a memoized template to concrete types.
 
-Its constructor is a multimethod with a single method templated with the type constructor parameters.
+Its constructor is a memoized template from the the type constructor parameters to constructor functions
+of concrete types.
 
 Field accessors for parameterized types are normal acessors; the accessee is of an instantiated type
 and that type contains the specialized `Field`s.
