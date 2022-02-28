@@ -9,7 +9,7 @@ Dynamically typed functional-first language with
 * First-class functions with
     - Arity and parameter type checking (mostly to facilitate use as multimethod methods)
 * Multimethods with
-    - Type parameters (`pure{T = Option}()`) (CLOS (eql specializers), Julia (`Type{Int}`))
+    - Type parameters (`pure{Option}()`) (CLOS (eql specializers), Julia (`Type{Int}`))
     - Templated methods (`forall T . get(v : Array{T}, i : USize)`) (Julia)
 * Dynamic type classes (built on top of multimethods)
 * Types with
@@ -44,7 +44,7 @@ no
 
 ## Grammar
 
-    expr ::= 'fn' typeArgs? params '->' expr
+    expr ::= ('forall' universals)? 'fn' typeArgs? params '->' expr
            | call
 
     call ::= callee typeArgs? args
@@ -59,6 +59,8 @@ no
 
     type ::= expr
 
+    universals ::= '(' VAR (',' VAR)*) ')'
+
     typeArgs ::= '{' type (',' type)* '}'
 
     params ::= '(' (param (',' param)*)? ')'
@@ -69,7 +71,7 @@ no
 
 ### LL(1) Grammar
 
-    expr ::= 'fn' typeArgs? params '->' expr
+    expr ::= ('forall' universals)? 'fn' typeArgs? params '->' expr
            | call
 
     call ::= callee typeArgs? args?
@@ -81,6 +83,8 @@ no
     const ::= INT
 
     type ::= expr
+
+    universals ::= '(' VAR (',' VAR)*) ')'
 
     typeArgs ::= '{' type (',' type)* '}'
 
@@ -104,6 +108,12 @@ don't overlap when the templates are expanded out by applying them to all possib
 In practice applying an entry template to two distinct inputs must produce outputs with distinct keys
 and it should be possible to use techniques from static universal type instantiationand unification
 to ensure templated entries do not overlap with each other or nontemplated entries.
+
+## Functions
+
+    ('forall' universals)? 'fn' typeArgs? params '->' expr
+
+    callee typeArgs? args
 
 ## Types
 
