@@ -123,6 +123,18 @@ tradeoff.
 
     callee typeArgs? args
 
+A function has a number of parameters, each of which may have a type that the argument is checked against
+at call time. There are no varargs or keyword parameters; instead, arrays or maps must be passed
+explicitly.
+
+`forall` makes the function a memoized template from `universals` to monomorphic functions. The arguments
+for `universal` need not and in fact cannot be passed explicitly, but are determined via template
+instantiation.
+
+`typeArgs` only exist to make functions usable as methods of multimethods with type parameters; clearly
+it is not really useful to specify that a function takes type arguments that must be equal to given types
+and are not even bound to any variable in the value parameters or body.
+
 ## Types
 
     record Type {
