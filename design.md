@@ -96,18 +96,26 @@ no
 
 ## Templates
 
-A template of arity *n* is a pure function from type sequences of length *n* to values.
+A **template** of arity *n* is a pure function from type sequences of length *n* to values.
+
+A template is **instantiable** to a value if its parameters may be replaced with concrete types
+in the template body so that the body becomes equal to that value. This test may be implemented
+by replacing the parameters with unification variables and then unifying the resulting body
+and the value.
+
+Two templates **overlap** if their parameters may be replaced with concrete types so that their bodies
+become equal. This test may be implemented by replacing the parameters with unification variables and
+then unifying the resulting bodies.
 
 ## Dispatchers
 
-A dispatcher of arity *n* is a mapping from type sequences of length *n* to values. The dispatcher
+A **dispatcher** of arity *n* is a mapping from type sequences of length *n* to values. The dispatcher
 entries may also be templates (whose domains can be distinct from the dispatcher domain).
 
-Even with templated entries, type sequence keys must not overlap. In theory this means the keys
-don't overlap when the templates are expanded out by applying them to all possible type sequences.
-In practice applying an entry template to two distinct inputs must produce outputs with distinct keys
-and it should be possible to use techniques from static universal type instantiationand unification
-to ensure templated entries do not overlap with each other or nontemplated entries.
+Dispatcher keys must be distinct; no nontemplated key sequence shall be equal to another, no templated
+entry shall be instantiable to a nontemplated key sequence and no templated entry shall overlap another.
+This makes method selection unambiguous and fast but dispatcher extension slow, which is the correct
+tradeoff.
 
 ## Functions
 
