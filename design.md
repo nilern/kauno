@@ -44,11 +44,11 @@ no
 
 ## Grammar
 
-    expr ::= ('forall' universals)? 'fn' typeArgs? params '->' expr
+    expr ::= ('forall' '(' VAR (',' VAR)*) ')')? 'fn' typeArgs? '(' (param (',' param)*)? ')' '->' expr
            | call
 
-    call ::= callee typeArgs? args
-           | callee typeArgs
+    call ::= callee typeValueArgs? args
+           | callee typeValueArgs
            | callee
 
     callee ::= '(' expr ')'
@@ -57,24 +57,26 @@ no
 
     const ::= INT
 
-    type ::= expr
-
-    universals ::= '(' VAR (',' VAR)*) ')'
-
-    typeArgs ::= '{' type (',' type)* '}'
-
-    params ::= '(' (param (',' param)*)? ')'
+    typeValueArgs ::= '{' expr (',' expr)* '}'
 
     param ::= VAR (':' type)
 
     args ::= '(' (expr (',' expr)*)? ')'
 
+    type ::= type typeArgs
+           | typeCallee
+
+    typeCallee ::= typeCallee '::' VAR
+                 | VAR
+
+    typeArgs ::= '{' type (',' type)* '}'
+
 ### LL(1) Grammar
 
-    expr ::= ('forall' universals)? 'fn' typeArgs? params '->' expr
+    expr ::= ('forall' '(' VAR (',' VAR)*) ')')? 'fn' typeArgs? '(' (param (',' param)*)? ')' '->' expr
            | call
 
-    call ::= callee typeArgs? args?
+    call ::= callee typeValueArgs? args?
 
     callee ::= '(' expr ')'
              | VAR
@@ -82,17 +84,13 @@ no
 
     const ::= INT
 
-    type ::= expr
-
-    universals ::= '(' VAR (',' VAR)*) ')'
-
-    typeArgs ::= '{' type (',' type)* '}'
-
-    params ::= '(' (param (',' param)*)? ')'
+    typeValueArgs ::= '{' expr (',' expr)* '}'
 
     param ::= VAR (':' type)
 
     args ::= '(' (expr (',' expr)*)? ')'
+
+    type ::= VAR ('::' VAR)* ('{' type (',' type)* '}')*
 
 ## Templates
 
@@ -119,7 +117,7 @@ tradeoff.
 
 ## Functions
 
-    ('forall' universals)? 'fn' typeArgs? params '->' expr
+    ('forall' '(' VAR (',' VAR)*) ')')? 'fn' typeArgs? '(' (param (',' param)*)? ')' '->' expr
 
     callee typeArgs? args
 
@@ -134,6 +132,21 @@ instantiation.
 `typeArgs` only exist to make functions usable as methods of multimethods with type parameters; clearly
 it is not really useful to specify that a function takes type arguments that must be equal to given types
 and are not even bound to any variable in the value parameters or body.
+
+### InstantiateTemplatedFunction
+
+Assuming that the parameter and argument signature arities (numbers of type and value parameters/arguments)
+match:
+
+1. Extend the environment of the functions definition site with the universal variables bound to unification
+   variables.
+2. Symbolically evaluate (i.e. don't compute sizes etc.) the function signature (type parameters and value
+   parameter types) in that environment.
+3. Unify the resulting symbolic types with the call signature. If unification fails, signal an error.
+4. Extract the unification variable values. If a unification variable was left undefined (e.g. not mentioned
+   in the function signature), signal an error.
+5. Rebind the universals to the extracted unification variable values.
+6. Evaluate the `fn` expression in that environment and return the result.
 
 ## Types
 
