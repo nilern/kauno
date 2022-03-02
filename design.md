@@ -115,6 +115,11 @@ entry shall be instantiable to a nontemplated key sequence and no templated entr
 This makes method selection unambiguous and fast but dispatcher extension slow, which is the correct
 tradeoff.
 
+## Signatures
+
+A **signature** consists of two type sequences: one for type parameters/arguments and one for value
+parameter/argument types. The lengths of those sequences are called the **arities** of the signature.
+
 ## Functions
 
     ('forall' '(' VAR (',' VAR)*) ')')? 'fn' typeArgs? '(' (param (',' param)*)? ')' '->' expr
@@ -133,43 +138,45 @@ and are not even bound to any variable in the value parameters or body.
 for `universal` need not and in fact cannot be passed explicitly, but are determined via template
 instantiation.
 
+### CheckArities
+
+(After the callee and arguments have been evaluated:)
+
+1. Compute the argument signature.
+2. Check that the parameter and argument signature arities match. If not, signal an error.
+
 ### DoCallFunction
 
-After the callee and arguments have been evaluated and the arguments checked:
+(After the callee and arguments have been evaluated and the arguments checked:)
 
 1. Extend the closure environment with the parameters bound to the arguments.
 2. Evaluate the function body in that environment.
 
 ### CallFunction
 
-After the callee and arguments have been evaluated:
+(After the callee and arguments have been evaluated:)
 
-1. Compute the argument signature (type arguments + value argument types).
-2. Check that the parameter and argument signature arities (numbers of type and value parameters/arguments)
-   match. If not, signal an error.
-3. Check that the argument signature types are equal to the parameter signature types. If not, signal an
+1. **CheckArities**
+2. Check that the argument signature types are equal to the parameter signature types. If not, signal an
    error.
-4. **DoCallFunction**
+3. **DoCallFunction**
 
 ### CallTemplatedFunction
 
-After the callee and arguments have been evaluated:
+(After the callee and arguments have been evaluated:)
 
-1. Compute the argument signature (type arguments + value argument types).
-2. Check that the parameter and argument signature arities (numbers of type and value parameters/arguments)
-   match. If not, signal an error.
-3. Make a cache lookup with the argument signature. If successful, **DoCallFunction** the found function.
-4. Else **InstantiateTemplatedFunction**, add the result to the cache and then **DoCallFunction** it.
+1. **CheckArities**
+2. Make a cache lookup with the argument signature. If successful, **DoCallFunction** the found function.
+3. Else **InstantiateTemplatedFunction**, add the result to the cache and then **DoCallFunction** it.
 
 ### InstantiateTemplatedFunction
 
-Assuming that the parameter and argument signature arities (numbers of type and value parameters/arguments)
-match:
+(Assuming that the parameter and argument signature arities (numbers of type and value parameters/arguments)
+match:)
 
 1. Extend the environment of the functions definition site with the universal variables bound to unification
    variables.
-2. Symbolically evaluate (i.e. don't compute sizes etc.) the function signature (type parameters and value
-   parameter types) in that environment.
+2. Symbolically evaluate (i.e. don't compute sizes etc.) the function signature in that environment.
 3. Unify the resulting symbolic types with the call signature. If unification fails, signal an error.
 4. Extract the unification variable values. If a unification variable was left undefined (e.g. not mentioned
    in the function signature), signal an error.
