@@ -8,12 +8,12 @@
 #include "state.hpp"
 #include "ast.hpp"
 
-static inline Handle<Any> parse_callee(State* state, Lexer* lexer);
+static inline Handle<void> parse_callee(State* state, Lexer* lexer);
 static inline size_t parse_args(State* state, Lexer* lexer);
 
 // expr ::= callee args?
-static inline Handle<Any> parse_expr(State* state, Lexer* lexer) {
-    Handle<Any> const callee = parse_callee(state, lexer);
+static inline Handle<void> parse_expr(State* state, Lexer* lexer) {
+    Handle<void> const callee = parse_callee(state, lexer);
 
     if (lexer->peek().type == Lexer::Token::Type::LPAREN) {
         size_t const argc = parse_args(state, lexer);
@@ -24,24 +24,24 @@ static inline Handle<Any> parse_expr(State* state, Lexer* lexer) {
             .args_count = argc,
             .args = {}
         };
-        ORef<Any>* const args = state->peekn(argc);
+        ORef<void>* const args = state->peekn(argc);
         std::copy(args, args + argc, &call->args[0]);
 
         state->popn(argc + 1);
-        return state->push(ORef(call)).template unchecked_cast<Any>();
+        return state->push(ORef(call)).template unchecked_cast<void>();
     } else {
         return callee;
     }
 }
 
 // callee ::= '(' expr ')' | VAR | INT
-static inline Handle<Any> parse_callee(State* state, Lexer* lexer) {
+static inline Handle<void> parse_callee(State* state, Lexer* lexer) {
     Lexer::Token const tok = lexer->peek();
 
     switch (tok.type) {
     case Lexer::Token::Type::LPAREN: {
         lexer->next();
-        Handle<Any> const expr = parse_expr(state, lexer);
+        Handle<void> const expr = parse_expr(state, lexer);
         lexer->match(Lexer::Token::Type::RPAREN);
         return expr;
     }
@@ -49,7 +49,7 @@ static inline Handle<Any> parse_callee(State* state, Lexer* lexer) {
     case Lexer::Token::Type::VAR: {
         lexer->next();
 
-        return Symbol_new(state, tok.chars, tok.len).template unchecked_cast<Any>();
+        return Symbol_new(state, tok.chars, tok.len).template unchecked_cast<void>();
     }
 
     case Lexer::Token::Type::INT: {
@@ -65,7 +65,7 @@ static inline Handle<Any> parse_callee(State* state, Lexer* lexer) {
 
         int64_t* data = (int64_t*)state->alloc(state->Int64.data());
         *data = n;
-        return state->push(ORef(data)).unchecked_cast<Any>();
+        return state->push(ORef(data)).unchecked_cast<void>();
     }
 
     case Lexer::Token::Type::RPAREN:

@@ -4,8 +4,8 @@
 
 #include "fn.hpp"
 
-static inline Handle<Any> eval(State* state) {
-    Handle<Any> const expr = state->peek();
+static inline Handle<void> eval(State* state) {
+    Handle<void> const expr = state->peek();
 
     if (expr.type() == state->Symbol) {
         Handle<Symbol> const symbol = expr.unchecked_cast<Symbol>();
@@ -31,7 +31,7 @@ static inline Handle<Any> eval(State* state) {
 
         state->pop_nth(argc + 1); // Pop `call`
 
-        Handle<Any> const callee = state->peek_nth(argc);
+        Handle<void> const callee = state->peek_nth(argc);
         if (callee.type() == state->Fn) {
             Handle<kauno::fn::Fn> const fn = callee.unchecked_cast<kauno::fn::Fn>();
 
@@ -40,9 +40,9 @@ static inline Handle<Any> eval(State* state) {
             }
 
             {
-                ORef<Any>* arg = state->peekn(argc);
+                ORef<void>* arg = state->peekn(argc);
                 for (size_t i = 0; i < argc; ++i, ++arg) {
-                    ORef<Any> const param_ann = fn.data()->domain[i];
+                    ORef<void> const param_ann = fn.data()->domain[i];
 
                     if (param_ann.is_instance(state->Type)) {
                         ORef<Type> const param_type = param_ann.unchecked_cast<Type>();

@@ -4,9 +4,9 @@
 #include "object.hpp"
 
 struct Call {
-    ORef<Any> callee;
+    ORef<void> callee;
     size_t args_count;
-    ORef<Any> args[0];
+    ORef<void> args[0];
 };
 
 #endif // AST_HPP

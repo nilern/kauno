@@ -7,12 +7,12 @@ class State;
 
 namespace kauno::fn {
 
-typedef Handle<Any> (*CodePtr)(State* state);
+typedef Handle<void> (*CodePtr)(State* state);
 
 struct Fn {
     CodePtr code;
     size_t domain_count;
-    ORef<Any> domain[0]; // ORef<Type | NoneType>
+    ORef<void> domain[0]; // ORef<Type | NoneType>
 };
 
 }

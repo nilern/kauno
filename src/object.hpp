@@ -11,8 +11,6 @@ struct Header {
     uintptr_t bits;
 };
 
-struct Any;
-
 struct Type;
 
 template<typename T>
@@ -43,7 +41,7 @@ public:
     template<typename U>
     ORef<U> unchecked_cast() const { return ORef<U>((U*)ptr_); }
 
-    ORef<Any> as_any() const { return unchecked_cast<Any>(); }
+    ORef<void> as_void() const { return unchecked_cast<void>(); }
 };
 
 template<typename T>
@@ -66,7 +64,7 @@ public:
     template<typename U>
     Handle<U> unchecked_cast() const { return Handle<U>((ORef<U>*)oref_ptr_); }
 
-    Handle<Any> as_any() const { return unchecked_cast<Any>(); }
+    Handle<void> as_void() const { return unchecked_cast<void>(); }
 };
 
 struct Field {

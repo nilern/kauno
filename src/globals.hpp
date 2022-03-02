@@ -7,10 +7,10 @@
 #include "symbol.hpp"
 
 struct Var {
-    ORef<Any> value;
+    ORef<void> value;
 };
 
-static inline Handle<Var> Var_new(State* state, Handle<Any> value);
+static inline Handle<Var> Var_new(State* state, Handle<void> value);
 
 class Globals {
     size_t count;

@@ -9,7 +9,7 @@
 
 #include "fn.hpp"
 
-static inline Handle<Any> builtin_prn(State* state) {
+static inline Handle<void> builtin_prn(State* state) {
     State_print_builtin(state, stdout, state->peek());
     puts("");
     state->pop_nth(1); // Pop self
@@ -20,7 +20,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     heap(heap_size),
 
     stack_size(stack_size_),
-    stack((ORef<struct Any>*)malloc(stack_size_)),
+    stack((ORef<void>*)malloc(stack_size_)),
 
     symbols_(),
 
@@ -226,7 +226,7 @@ State::State(size_t heap_size, size_t stack_size_) :
 
     Handle<struct Type> const Type_handle = push(ORef(Type));
     Handle<struct Symbol> const Type_symbol = Symbol_new(this, "Type", 4);
-    Handle<struct Var> const Type_var = Var_new(this, Type_handle.as_any());
+    Handle<struct Var> const Type_var = Var_new(this, Type_handle.as_void());
     globals.insert(Type_symbol.oref(), Type_var.oref());
     popn(3);
 
@@ -236,25 +236,25 @@ State::State(size_t heap_size, size_t stack_size_) :
         .domain_count = 1,
         .domain = {}
     };
-    prn.data()->domain[0] = None.as_any();
+    prn.data()->domain[0] = None.as_void();
     Handle<kauno::fn::Fn> const prn_handle = push(ORef(prn));
     Handle<struct Symbol> const prn_symbol = Symbol_new(this, "prn", 3);
-    Handle<struct Var> const prn_var = Var_new(this, prn_handle.as_any());
+    Handle<struct Var> const prn_var = Var_new(this, prn_handle.as_void());
     globals.insert(prn_symbol.oref(), prn_var.oref());
     popn(3);
 }
 
-Handle<Any> State::peek() {
+Handle<void> State::peek() {
     assert(sp > &stack[0]);
     return Handle(sp - 1);
 }
 
-Handle<Any> State::peek_nth(size_t n) {
+Handle<void> State::peek_nth(size_t n) {
     assert(sp - n >= &stack[0]);
     return Handle(sp - 1 - n);
 }
 
-ORef<Any>* State::peekn(size_t n) {
+ORef<void>* State::peekn(size_t n) {
     assert(sp - n >= &stack[0]);
     return sp - n;
 }
@@ -271,11 +271,11 @@ void State::popn(size_t n) {
 
 void State::pop_nth(size_t n) {
     assert(sp - n >= &stack[0]);
-    memmove(sp - 1 - n, sp - n, sizeof(ORef<struct Any>)*n);
+    memmove(sp - 1 - n, sp - n, sizeof(ORef<void>)*n);
     --sp;
 }
 
-static inline void State_print_builtin(State const* state, FILE* dest, Handle<Any> value) {
+static inline void State_print_builtin(State const* state, FILE* dest, Handle<void> value) {
     ORef<Type> type = value.type();
     void* data = value.data();
     if (type == state->Type) {

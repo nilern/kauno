@@ -5,7 +5,7 @@
 
 #include "symbol.hpp"
 
-static inline Handle<Var> Var_new(State* state, Handle<Any> value) {
+static inline Handle<Var> Var_new(State* state, Handle<void> value) {
     Var* var = (Var*)state->alloc(state->Var.data());
     *var = (Var){.value = value.oref()};
     return state->push(ORef(var));

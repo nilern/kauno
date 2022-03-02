@@ -9,14 +9,14 @@
 #include "globals.hpp"
 #include "ast.hpp"
 
-static inline void State_print_builtin(State const* state, FILE* dest, Handle<Any> value);
+static inline void State_print_builtin(State const* state, FILE* dest, Handle<void> value);
 
 class State {
     Heap heap;
 
-    ORef<struct Any>* sp;
+    ORef<void>* sp;
     size_t stack_size;
-    ORef<struct Any>* stack; // TODO: Growable ("infinite") stack
+    ORef<void>* stack; // TODO: Growable ("infinite") stack
 
     SymbolTable symbols_;
 
@@ -56,19 +56,19 @@ public:
 
     template<typename T>
     Handle<T> push(ORef<T> value) {
-        ORef<struct Any>* const old_sp = sp;
-        ORef<struct Any>* const new_sp = old_sp + 1;
-        if (new_sp >= (ORef<struct Any>*)((char*)&stack + stack_size)) { exit(EXIT_FAILURE); } // FIXME
-        *old_sp = value.as_any();
+        ORef<void>* const old_sp = sp;
+        ORef<void>* const new_sp = old_sp + 1;
+        if (new_sp >= (ORef<void>*)((char*)&stack + stack_size)) { exit(EXIT_FAILURE); } // FIXME
+        *old_sp = value.as_void();
         sp = new_sp;
         return Handle(old_sp).template unchecked_cast<T>();
     }
 
-    Handle<struct Any> peek();
+    Handle<void> peek();
 
-    Handle<struct Any> peek_nth(size_t n);
+    Handle<void> peek_nth(size_t n);
 
-    ORef<struct Any>* peekn(size_t n);
+    ORef<void>* peekn(size_t n);
 
     void pop();
 
@@ -81,7 +81,7 @@ public:
     struct Var* global(Handle<struct Symbol> name) { return globals.find(name.oref()); }
 
     void dump_stack(FILE* dest) {
-        for (ORef<struct Any>* p = &stack[0]; p < sp; ++p) {
+        for (ORef<void>* p = &stack[0]; p < sp; ++p) {
             fprintf(dest, "[%zd] = ", sp - p);
             State_print_builtin(this, dest, Handle(p));
             fputs("\n", dest);

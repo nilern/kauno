@@ -3,6 +3,6 @@
 
 #include "state.hpp"
 
-static inline Handle<Any> eval(State* state);
+static inline Handle<void> eval(State* state);
 
 #endif // EVAL_H

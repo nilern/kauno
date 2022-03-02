@@ -38,8 +38,8 @@ void* Heap::alloc(Type* type) {
 void* Heap::alloc_indexed(Type* type, size_t indexed_count) {
     // TODO: Sanity checks:
     Type* const elem_type = type->fields[type->fields_count - 1].type.data();
-    size_t elem_align = alignof(ORef<Any>);
-    size_t elem_size = sizeof(ORef<Any>);
+    size_t elem_align = alignof(ORef<void>);
+    size_t elem_size = sizeof(ORef<void>);
     if (elem_type) {
         elem_align = elem_type->align > alignof(size_t) ? elem_type->align : alignof(size_t);
         elem_size = elem_type->min_size;
@@ -122,7 +122,7 @@ static inline char* scan_field(Heap* heap, ORef<Type> field_type, char* field) {
         return scan_fields(heap, type, field);
     } else {
         // Mark field:
-        ORef<Any>* const oref = (ORef<Any>*)field;
+        ORef<void>* const oref = (ORef<void>*)field;
         *oref = mark(heap, *oref);
         return (char*)(oref + 1);
     }
@@ -137,7 +137,7 @@ void Heap::collect() {
     while (scan < copied) {
         if (!granule_eq(*(Granule*)scan, ALIGNMENT_HOLE)) {
             // Scan object:
-            ORef<Any> const oref = ORef((Any*)scan);
+            ORef<void> const oref = ORef((void*)scan);
             oref.set_type(mark(this, ORef(oref.type()))); // mark type
             uintptr_t const addr = (uintptr_t)(void*)scan_fields(this, oref.type().data(), (char*)oref.data()); // scan fields
             scan = (char*)(void*)((addr + alignof(Granule) - 1) & ~(alignof(Granule) - 1));
