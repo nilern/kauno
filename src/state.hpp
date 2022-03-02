@@ -35,6 +35,9 @@ public:
     ORef<struct Type> Call;
     ORef<struct Type> CodePtr;
     ORef<struct Type> Fn;
+    ORef<struct Type> NoneType;
+
+    ORef<struct None> None;
 
     State(size_t heap_size, size_t stack_size);
 

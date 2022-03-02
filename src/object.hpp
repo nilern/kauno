@@ -107,4 +107,6 @@ Field::Field(ORef<Type> type_, size_t offset_)
     : type(type_), offset(offset_),
       size(type_.data()->min_size), inlined(type_.data()->inlineable) {}
 
+struct None {};
+
 #endif // OBJECT_H

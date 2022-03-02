@@ -37,7 +37,10 @@ State::State(size_t heap_size, size_t stack_size_) :
     Var(ORef<struct Type>(nullptr)),
     Call(ORef<struct Type>(nullptr)),
     CodePtr(ORef<struct Type>(nullptr)),
-    Fn(ORef<struct Type>(nullptr))
+    Fn(ORef<struct Type>(nullptr)),
+    NoneType(ORef<struct Type>(nullptr)),
+
+    None(ORef<struct None>(nullptr))
 {
     sp = stack;
 
@@ -233,6 +236,21 @@ State::State(size_t heap_size, size_t stack_size_) :
         .fields = {}
     };
     Fn.data()->fields[0] = (struct Field){CodePtr, offsetof(kauno::fn::Fn, code)};
+
+    size_t const None_fields_count = 0;
+    NoneType = ORef((struct Type*)heap.alloc_indexed(Type.data(), None_fields_count));
+    *NoneType.data() = (struct Type){
+        .super = Any,
+        .align = alignof(struct None),
+        .min_size = sizeof(struct None),
+        .inlineable = true,
+        .is_bits = false,
+        .has_indexed = false,
+        .fields_count = None_fields_count,
+        .fields = {}
+    };
+
+    None = ORef(static_cast<struct None*>(heap.alloc(NoneType.data())));
 
 
     Handle<struct Type> const Type_handle = push(ORef(Type));
