@@ -42,8 +42,14 @@ static inline Handle<Any> eval(State* state) {
             {
                 ORef<Any>* arg = state->peekn(argc);
                 for (size_t i = 0; i < argc; ++i, ++arg) {
-                    if (!arg->is_instance(fn.data()->domain[i])) {
-                        exit(EXIT_FAILURE); // FIXME
+                    ORef<Any> const param_ann = fn.data()->domain[i];
+
+                    if (param_ann.is_instance(state->Type)) {
+                        ORef<Type> const param_type = param_ann.unchecked_cast<Type>();
+
+                        if (!arg->is_instance(param_type)) {
+                            exit(EXIT_FAILURE); // FIXME
+                        }
                     }
                 }
             }

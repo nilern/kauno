@@ -30,7 +30,6 @@ public:
     ORef<struct Type> USize;
     ORef<struct Type> Bool;
     ORef<struct Type> Symbol;
-    ORef<struct Type> Any;
     ORef<struct Type> Var;
     ORef<struct Type> Call;
     ORef<struct Type> CodePtr;

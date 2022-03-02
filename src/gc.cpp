@@ -38,14 +38,19 @@ void* Heap::alloc(Type* type) {
 void* Heap::alloc_indexed(Type* type, size_t indexed_count) {
     // TODO: Sanity checks:
     Type* const elem_type = type->fields[type->fields_count - 1].type.data();
+    size_t elem_align = alignof(ORef<Any>);
+    size_t elem_size = sizeof(ORef<Any>);
+    if (elem_type) {
+        elem_align = elem_type->align > alignof(size_t) ? elem_type->align : alignof(size_t);
+        elem_size = elem_type->min_size;
+    }
 
     // Compute alignment:
     size_t const align = type->align > alignof(Header) ? type->align : alignof(Header);
-    size_t const elem_align = elem_type->align > alignof(size_t) ? elem_type->align : alignof(size_t);
 
     // Compute obj start:
     size_t const free_ = (size_t)(void*)free;
-    size_t indexed_start = free_ - indexed_count * elem_type->min_size; // TODO: overflow check
+    size_t indexed_start = free_ - indexed_count * elem_size; // TODO: overflow check
     indexed_start &= ~(elem_align - 1); // Align
     size_t data_start = indexed_start - type->min_size; // TODO: overflow check
     data_start &= ~(align - 1); // Align

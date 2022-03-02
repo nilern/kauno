@@ -38,7 +38,7 @@ public:
 
     bool operator!=(ORef<T> other) const { return ptr_ != other.ptr_; }
 
-    bool is_instance(ORef<Type> super) const;
+    bool is_instance(ORef<Type> super) const { return type() == super; }
 
     template<typename U>
     ORef<U> unchecked_cast() const { return ORef<U>((U*)ptr_); }
@@ -79,7 +79,6 @@ struct Field {
 };
 
 struct Type {
-    ORef<Type> super;
     size_t align;
     size_t min_size;
     bool inlineable;
@@ -89,23 +88,16 @@ struct Type {
     Field fields[0];
 };
 
-template<typename T>
-bool ORef<T>::is_instance(ORef<Type> super) const {
-    ORef<Type> t = type();
-
-    while (true) {
-        if (t == super) { return true; }
-
-        // FIXME: non-obvious due to Any.super == Any:
-        ORef<Type> const t_ = t.data()->super;
-        if (t_ == t) { return false; }
-        t = t_;
-    }
-}
-
 Field::Field(ORef<Type> type_, size_t offset_)
     : type(type_), offset(offset_),
-      size(type_.data()->min_size), inlined(type_.data()->inlineable) {}
+      size(0), inlined(false)
+{
+    Type* const t = type_.data();
+    if (t) {
+        size = t->min_size;
+        inlined = t->inlineable;
+    }
+}
 
 struct None {};
 
