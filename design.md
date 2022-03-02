@@ -133,6 +133,28 @@ instantiation.
 it is not really useful to specify that a function takes type arguments that must be equal to given types
 and are not even bound to any variable in the value parameters or body.
 
+### CallFunction
+
+After the callee and arguments have been evaluated:
+
+1. Compute the argument signature (type arguments + value argument types).
+2. Check that the parameter and argument signature arities (numbers of type and value parameters/arguments)
+   match. If not, signal an error.
+3. Check that the argument signature types are equal to the parameter signature types. If not, signal an
+   error.
+4. Extend the closure environment with the parameters bound to the arguments.
+5. Evaluate the function body in that environment.
+
+### CallTemplatedFunction
+
+After the callee and arguments have been evaluated:
+
+1. Compute the argument signature (type arguments + value argument types).
+2. Check that the parameter and argument signature arities (numbers of type and value parameters/arguments)
+   match. If not, signal an error.
+3. Make a cache lookup with the argument signature. If successful, **CallFunction** the found function.
+4. Else **InstantiateTemplatedFunction**, add the result to the cache and then **CallFunction** it.
+
 ### InstantiateTemplatedFunction
 
 Assuming that the parameter and argument signature arities (numbers of type and value parameters/arguments)
