@@ -168,7 +168,8 @@ instantiation.
 1. **CheckArities**
 2. Make a cache lookup with the argument signature.
 3. If successful, **DoCallFunction** the found function and return the result.
-4. Else **InstantiateTemplatedFunction** and **DoCallFunction** the resulting function.
+4. Else **InstantiateTemplatedFunction**, add the resulting function to the template cache and
+   **DoCallFunction** it.
 
 ### InstantiateTemplatedFunction
 
@@ -182,7 +183,7 @@ match:)
 4. Extract the unification variable values. If a unification variable was left undefined (e.g. not mentioned
    in the function signature), signal an error.
 5. Rebind the universals to the extracted unification variable values.
-6. Evaluate the `fn` expression in that environment, add the result to the cache and return it.
+6. Evaluate the `fn` expression in that environment and return the result.
 
 ## Multimethods
 
@@ -194,8 +195,9 @@ match:)
 2. Make a cache lookup with the argument signature.
 3. If successful, **DoCallFunction** the found function and return the result.
 4. Else for all template methods:
-    1. Try **InstantiateTemplatedFunction**
-    2. If successful **DoCallFunction** the resulting function and return the result.
+    1. Try **InstantiateTemplatedFunction**.
+    2. If successful, add the resulting function to the multimethod cache, **DoCallFunction** it and return
+       the result.
     3. Else continue loop.
 6. If we get here, no suitable method exists; signal an error.
 
