@@ -166,8 +166,9 @@ instantiation.
 (After the callee and arguments have been evaluated:)
 
 1. **CheckArities**
-2. Make a cache lookup with the argument signature. If successful, **DoCallFunction** the found function.
-3. Else **InstantiateTemplatedFunction**, add the result to the cache and then **DoCallFunction** it.
+2. Make a cache lookup with the argument signature.
+    1. If successful, **DoCallFunction** the found function.
+    2. Else **InstantiateTemplatedFunction**, add the result to the cache and then **DoCallFunction** it.
 
 ### InstantiateTemplatedFunction
 
