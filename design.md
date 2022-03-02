@@ -125,13 +125,20 @@ A function has a number of parameters, each of which may have a type that the ar
 at call time. There are no varargs or keyword parameters; instead, arrays or maps must be passed
 explicitly.
 
+`typeArgs` only exist to make functions usable as methods of multimethods with type parameters; clearly
+it is not really useful to specify that a function takes type arguments that must be equal to given types
+and are not even bound to any variable in the value parameters or body.
+
 `forall` makes the function a memoized template from `universals` to monomorphic functions. The arguments
 for `universal` need not and in fact cannot be passed explicitly, but are determined via template
 instantiation.
 
-`typeArgs` only exist to make functions usable as methods of multimethods with type parameters; clearly
-it is not really useful to specify that a function takes type arguments that must be equal to given types
-and are not even bound to any variable in the value parameters or body.
+### DoCallFunction
+
+After the callee and arguments have been evaluated and the arguments checked:
+
+1. Extend the closure environment with the parameters bound to the arguments.
+2. Evaluate the function body in that environment.
 
 ### CallFunction
 
@@ -142,8 +149,7 @@ After the callee and arguments have been evaluated:
    match. If not, signal an error.
 3. Check that the argument signature types are equal to the parameter signature types. If not, signal an
    error.
-4. Extend the closure environment with the parameters bound to the arguments.
-5. Evaluate the function body in that environment.
+4. **DoCallFunction**
 
 ### CallTemplatedFunction
 
@@ -152,8 +158,8 @@ After the callee and arguments have been evaluated:
 1. Compute the argument signature (type arguments + value argument types).
 2. Check that the parameter and argument signature arities (numbers of type and value parameters/arguments)
    match. If not, signal an error.
-3. Make a cache lookup with the argument signature. If successful, **CallFunction** the found function.
-4. Else **InstantiateTemplatedFunction**, add the result to the cache and then **CallFunction** it.
+3. Make a cache lookup with the argument signature. If successful, **DoCallFunction** the found function.
+4. Else **InstantiateTemplatedFunction**, add the result to the cache and then **DoCallFunction** it.
 
 ### InstantiateTemplatedFunction
 
