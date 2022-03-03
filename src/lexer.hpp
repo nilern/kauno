@@ -12,15 +12,17 @@ public:
         enum class Type {
             LPAREN, RPAREN,
             COMMA,
-            VAR,
+            ARROW,
+            FN, VAR,
             INT,
             TOKEN_EOF
         };
 
-        static constexpr char const* const NAMES[6] = {
+        static constexpr char const* const NAMES[8] = {
             "LPAREN", "RPAREN",
             "COMMA",
-            "VAR",
+            "ARROW",
+            "FN", "VAR",
             "INT",
             "EOF"
         };

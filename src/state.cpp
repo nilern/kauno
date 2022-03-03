@@ -36,6 +36,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     Bool(ORef<struct Type>(nullptr)),
     Symbol(ORef<struct Type>(nullptr)),
     Var(ORef<struct Type>(nullptr)),
+    AstFn(ORef<struct Type>(nullptr)),
     Call(ORef<struct Type>(nullptr)),
     CodePtr(ORef<struct Type>(nullptr)),
     Fn(ORef<struct Type>(nullptr)),
@@ -178,16 +179,16 @@ State::State(size_t heap_size, size_t stack_size_) :
     size_t const Call_fields_count = 2;
     Call = ORef((struct Type*)heap.alloc_indexed(Type.data(), Call_fields_count));
     *Call.data() = (struct Type){
-        .align = alignof(struct Call),
-        .min_size = sizeof(struct Call),
+        .align = alignof(kauno::ast::Call),
+        .min_size = sizeof(kauno::ast::Call),
         .inlineable = false,
         .is_bits = false,
         .has_indexed = true,
         .fields_count = Call_fields_count,
         .fields = {}
     };
-    Call.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr), offsetof(struct Call, callee)};
-    Call.data()->fields[1] = (struct Field){ORef<struct Type>(nullptr), offsetof(struct Call, args)};
+    Call.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr), offsetof(kauno::ast::Call, callee)};
+    Call.data()->fields[1] = (struct Field){ORef<struct Type>(nullptr), offsetof(kauno::ast::Call, args)};
 
     CodePtr = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
     *CodePtr.data() = (struct Type){
@@ -238,6 +239,20 @@ State::State(size_t heap_size, size_t stack_size_) :
     };
     RefArray.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr),
             offsetof(kauno::arrays::RefArray<ORef<void>>, elements)};
+
+    AstFn = ORef((struct Type*)heap.alloc_indexed(Type.data(), kauno::ast::Fn::FIELDS_COUNT));
+    *AstFn.data() = (struct Type){
+        .align = alignof(kauno::ast::Fn),
+        .min_size = sizeof(kauno::ast::Fn),
+        .inlineable = kauno::ast::Fn::INLINEABLE,
+        .is_bits = kauno::ast::Fn::IS_BITS,
+        .has_indexed = kauno::ast::Fn::HAS_INDEXED,
+        .fields_count = kauno::ast::Fn::FIELDS_COUNT,
+        .fields = {}
+    };
+    AstFn.data()->fields[0] = (struct Field){RefArray, offsetof(kauno::ast::Fn, domain)};
+    AstFn.data()->fields[1] = (struct Field){ORef<struct Type>(nullptr), offsetof(kauno::ast::Fn, body)};
+    AstFn.data()->fields[2] = (struct Field){Symbol, offsetof(kauno::ast::Fn, params)};
 
     Locals = ORef((struct Type*)heap.alloc_indexed(Type.data(), Locals::FIELDS_COUNT));
     *Locals.data() = (struct Type){
@@ -323,6 +338,8 @@ static inline void State_print_builtin(State const* state, FILE* dest, Handle<vo
         }
     } else if (type == state->Var) {
         fputs("<Var>", dest);
+    } else if (type == state->AstFn) {
+        fprintf(dest, "<AstFn @ %p>", data);
     } else if (type == state->Call) {
         fprintf(dest, "<Call @ %p>", data);
     } else if (type == state->Fn) {

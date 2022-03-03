@@ -6,9 +6,9 @@
 
 using std::optional;
 
-#include "object.hpp"
 #include "arrays.hpp"
 #include "symbol.hpp"
+#include "state.hpp"
 
 using kauno::arrays::RefArray;
 

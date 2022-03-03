@@ -18,7 +18,7 @@ static inline Handle<void> eval(State* state) {
         state->pop();
         return state->push(var->value);
     } else if (expr.type() == state->Call) {
-        Handle<Call> const call = expr.unchecked_cast<Call>();
+        Handle<kauno::ast::Call> const call = expr.unchecked_cast<kauno::ast::Call>();
 
         state->push(call.data()->callee);
         eval(state);

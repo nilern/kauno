@@ -2,6 +2,7 @@
 
 #include <cstdlib>
 #include <cctype>
+#include <cstring>
 
 void Lexer::Token::print(FILE* dest) const {
     fprintf(dest, "<%s \"", Lexer::Token::NAMES[(size_t)type]);
@@ -50,6 +51,20 @@ void Lexer::look_ahead() {
                 return;
             }
 
+            case '-': {
+                if (*(chars + 1) == '>') {
+                    first = (Lexer::Token){
+                        .type = Lexer::Token::Type::ARROW,
+                        .chars = chars,
+                        .len = 2,
+                        .span = {index, index + 2}
+                    };
+                    return;
+                } else {
+                    exit(EXIT_FAILURE); // FIXME
+                }
+            }
+
             default:
                 if (isspace(*chars)) {
                     ++chars;
@@ -63,8 +78,16 @@ void Lexer::look_ahead() {
                         ++len;
                     }
 
+                    Lexer::Token::Type type = Lexer::Token::Type::VAR;
+                    switch (len) {
+                    case 2: {
+                        if (strncmp(chars, "fn", len) == 0) {
+                            type = Lexer::Token::Type::FN;
+                        }
+                    }
+                    }
                     first = (Lexer::Token){
-                        .type = Lexer::Token::Type::VAR,
+                        .type = type,
                         .chars = tok_chars,
                         .len = len,
                         .span = {start, start + len - 1}

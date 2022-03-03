@@ -31,6 +31,7 @@ public:
     ORef<struct Type> Bool;
     ORef<struct Type> Symbol;
     ORef<struct Type> Var;
+    ORef<struct Type> AstFn;
     ORef<struct Type> Call;
     ORef<struct Type> CodePtr;
     ORef<struct Type> Fn;

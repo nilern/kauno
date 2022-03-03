@@ -3,7 +3,6 @@
 
 #include <cstddef>
 
-#include "object.hpp"
 #include "state.hpp"
 
 namespace kauno::arrays {
