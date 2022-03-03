@@ -35,6 +35,7 @@ public:
     ORef<struct Type> CodePtr;
     ORef<struct Type> Fn;
     ORef<struct Type> NoneType;
+    ORef<struct Type> RefArray;
 
     ORef<struct None> None;
 

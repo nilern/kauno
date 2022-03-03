@@ -7,6 +7,7 @@
 #include <utility>
 #include <algorithm>
 
+#include "arrays.hpp"
 #include "fn.hpp"
 
 static inline Handle<void> builtin_prn(State* state) {
@@ -38,6 +39,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     CodePtr(ORef<struct Type>(nullptr)),
     Fn(ORef<struct Type>(nullptr)),
     NoneType(ORef<struct Type>(nullptr)),
+    RefArray(ORef<struct Type>(nullptr)),
 
     None(ORef<struct None>(nullptr))
 {
@@ -220,6 +222,20 @@ State::State(size_t heap_size, size_t stack_size_) :
         .fields_count = None_fields_count,
         .fields = {}
     };
+
+    size_t const RefArray_fields_count = 1;
+    RefArray = ORef((struct Type*)heap.alloc_indexed(Type.data(), RefArray_fields_count));
+    *RefArray.data() = (struct Type){
+        .align = alignof(kauno::arrays::RefArray<ORef<void>>),
+        .min_size = sizeof(kauno::arrays::RefArray<ORef<void>>),
+        .inlineable = false,
+        .is_bits = false,
+        .has_indexed = true,
+        .fields_count = RefArray_fields_count,
+        .fields = {}
+    };
+    RefArray.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr),
+            offsetof(kauno::arrays::RefArray<ORef<void>>, elements)};
 
     None = ORef(static_cast<struct None*>(heap.alloc(NoneType.data())));
 
