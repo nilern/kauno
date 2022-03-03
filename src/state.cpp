@@ -40,6 +40,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     Call(ORef<struct Type>(nullptr)),
     CodePtr(ORef<struct Type>(nullptr)),
     Fn(ORef<struct Type>(nullptr)),
+    Closure(ORef<struct Type>(nullptr)),
     NoneType(ORef<struct Type>(nullptr)),
     RefArray(ORef<struct Type>(nullptr)),
     Locals(ORef<struct Type>(nullptr)),
@@ -268,6 +269,19 @@ State::State(size_t heap_size, size_t stack_size_) :
     Locals.data()->fields[1] = (struct Field){RefArray, offsetof(struct Locals, values)};
     Locals.data()->fields[2] = (struct Field){Symbol, offsetof(struct Locals, keys)};
 
+    Closure = ORef(static_cast<struct Type*>(heap.alloc_indexed(Type.data(), kauno::fn::Closure::FIELDS_COUNT)));
+    *Closure.data() = (struct Type){
+        .align = alignof(kauno::fn::Closure),
+        .min_size = sizeof(kauno::fn::Closure),
+        .inlineable = kauno::fn::Closure::INLINEABLE,
+        .is_bits = kauno::fn::Closure::IS_BITS,
+        .has_indexed = kauno::fn::Closure::HAS_INDEXED,
+        .fields_count = kauno::fn::Closure::FIELDS_COUNT,
+        .fields = {}
+    };
+    Locals.data()->fields[0] = (struct Field){AstFn, offsetof(kauno::fn::Closure, code)};
+    Locals.data()->fields[1] = (struct Field){ORef<struct Type>(nullptr), offsetof(kauno::fn::Closure, env)};
+
     None = ORef(static_cast<struct None*>(heap.alloc(NoneType.data())));
 
 
@@ -346,6 +360,8 @@ static inline void State_print_builtin(State const* state, FILE* dest, Handle<vo
         fprintf(dest, "<Fn @ %p>", data);
     } else if (type == state->CodePtr) {
         fprintf(dest, "<CodePtr @ %p>", data);
+    } else if (type == state->Closure) {
+        fprintf(dest, "<Closure @ %p>", data);
     } else if (type == state->UInt8) {
         fprintf(dest, "%u", *(uint8_t*)data);
     } else if (type == state->Int64) {

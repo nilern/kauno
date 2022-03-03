@@ -4,7 +4,7 @@
 
 #include "fn.hpp"
 
-static inline Handle<void> eval(State* state) {
+static inline Handle<void> eval(State* state, Handle<void> env) {
     Handle<void> const expr = state->peek();
 
     if (expr.type() == state->Symbol) {
@@ -15,18 +15,18 @@ static inline Handle<void> eval(State* state) {
             exit(EXIT_FAILURE); // FIXME
         }
 
-        state->pop();
+        state->pop(); // `expr`
         return state->push(var->value);
     } else if (expr.type() == state->Call) {
         Handle<kauno::ast::Call> const call = expr.unchecked_cast<kauno::ast::Call>();
 
         state->push(call.data()->callee);
-        eval(state);
+        eval(state, env);
 
         size_t const argc = call.data()->args_count;
         for (size_t i = 0; i < argc; ++i) {
             state->push(call.data()->args[i]);
-            eval(state);
+            eval(state, env);
         }
 
         state->pop_nth(argc + 1); // Pop `call`
@@ -58,6 +58,12 @@ static inline Handle<void> eval(State* state) {
         } else {
             exit(EXIT_FAILURE); // FIXME
         }
+    } else if (expr.type() == state->AstFn) {
+        Handle<kauno::ast::Fn> const fn = expr.unchecked_cast<kauno::ast::Fn>();
+
+        kauno::fn::Closure::create(*state, fn, env);
+        state->pop_nth(1); // `expr`
+        return state->peek(); // the closure
     } else {
         return expr;
     }

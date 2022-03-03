@@ -13,6 +13,7 @@
 int main(int argc, char* argv[]) {
     if (argc == 2) {
         State state(1024*1024, 1024*1024); // 1 MiB
+        Handle<void> env = state.push(state.None.as_void());
 
         {
             Lexer lexer(argv[1], strlen(argv[1]));
@@ -37,7 +38,7 @@ int main(int argc, char* argv[]) {
 
         puts("\n---\n");
 
-        Handle<void> const value = eval(&state);
+        Handle<void> const value = eval(&state, env);
         State_print_builtin(&state, stdout, value);
         puts("");
 
