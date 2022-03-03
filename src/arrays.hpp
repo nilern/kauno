@@ -4,6 +4,7 @@
 #include <cstddef>
 
 #include "object.hpp"
+#include "state.hpp"
 
 namespace kauno::arrays {
 
@@ -11,6 +12,11 @@ template<typename T>
 struct RefArray {
     size_t count;
     ORef<T> elements[0];
+
+    static Handle<RefArray<T>> create(State& state, size_t count) {
+        RefArray<T>* const array = static_cast<RefArray<T>*>(state.alloc_indexed(state.RefArray.data(), count));
+        return state.push(ORef(array));
+    }
 };
 
 }

@@ -13,6 +13,7 @@ src/globals.cpp
 src/globals.hpp
 src/lexer.cpp
 src/lexer.hpp
+src/locals.hpp
 src/main.cpp
 src/object.hpp
 src/parser.cpp

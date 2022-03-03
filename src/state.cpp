@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "arrays.hpp"
+#include "locals.hpp"
 #include "fn.hpp"
 
 static inline Handle<void> builtin_prn(State* state) {
@@ -40,6 +41,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     Fn(ORef<struct Type>(nullptr)),
     NoneType(ORef<struct Type>(nullptr)),
     RefArray(ORef<struct Type>(nullptr)),
+    Locals(ORef<struct Type>(nullptr)),
 
     None(ORef<struct None>(nullptr))
 {
@@ -236,6 +238,20 @@ State::State(size_t heap_size, size_t stack_size_) :
     };
     RefArray.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr),
             offsetof(kauno::arrays::RefArray<ORef<void>>, elements)};
+
+    Locals = ORef((struct Type*)heap.alloc_indexed(Type.data(), Locals::FIELDS_COUNT));
+    *Locals.data() = (struct Type){
+        .align = alignof(struct Locals),
+        .min_size = sizeof(struct Locals),
+        .inlineable = Locals::INLINEABLE,
+        .is_bits = Locals::IS_BITS,
+        .has_indexed = Locals::HAS_INDEXED,
+        .fields_count = Locals::FIELDS_COUNT,
+        .fields = {}
+    };
+    Locals.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr), offsetof(struct Locals, parent)};
+    Locals.data()->fields[1] = (struct Field){RefArray, offsetof(struct Locals, values)};
+    Locals.data()->fields[2] = (struct Field){Symbol, offsetof(struct Locals, keys)};
 
     None = ORef(static_cast<struct None*>(heap.alloc(NoneType.data())));
 

@@ -36,6 +36,7 @@ public:
     ORef<struct Type> Fn;
     ORef<struct Type> NoneType;
     ORef<struct Type> RefArray;
+    ORef<struct Type> Locals;
 
     ORef<struct None> None;
 
