@@ -78,7 +78,9 @@ public:
 
     void popn(size_t n);
 
-    void pop_nth(size_t n);
+    void pop_nth(size_t i);
+
+    void popn_nth(size_t i, size_t n);
 
     SymbolTable* symbols() { return &symbols_; }
 

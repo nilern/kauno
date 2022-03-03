@@ -23,7 +23,6 @@ struct Locals {
     static bool const HAS_INDEXED = true;
     static bool const INLINEABLE = false;
 
-private:
     static Handle<Locals> create(State& state, Handle<void> parent, size_t count) {
         size_t capacity = 2*count; // Load factor = 0.5
 
@@ -41,18 +40,6 @@ private:
         return state.push(ORef(locals));
     }
 
-public:
-    static Handle<Locals> create(State& state, Handle<Locals> parent, size_t count) {
-        return create(state, parent.as_void(), count);
-    }
-
-    static Handle<Locals> create(State& state, size_t count) {
-        Handle<void> const parent = state.push(state.None.as_void());
-        Handle<Locals> const locals = create(state, parent, count);
-        state.pop_nth(1); // `parent`
-        return locals;
-    }
-
     void insert(ORef<Symbol> key, ORef<void> value) {
         size_t const hash = key.data()->hash;
 
@@ -61,6 +48,7 @@ public:
             if (!keys[i].data()) {
                 keys[i] = key;
                 values.data()->elements[i] = value;
+                return;
             }
         }
     }

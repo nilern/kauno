@@ -330,10 +330,17 @@ void State::popn(size_t n) {
     sp -= n;
 }
 
-void State::pop_nth(size_t n) {
-    assert(sp - n >= &stack[0]);
-    memmove(sp - 1 - n, sp - n, sizeof(ORef<void>)*n);
+void State::pop_nth(size_t i) {
+    assert(sp - i >= &stack[0]);
+    memmove(sp - 1 - i, sp - i, sizeof(ORef<void>)*i);
     --sp;
+}
+
+void State::popn_nth(size_t i, size_t n) {
+    assert(n <= i + 1);
+    assert(sp - i >= &stack[0]);
+    memmove(sp - 1 - i, sp - 1 - i + n, sizeof(ORef<void>)*(i + 1 - n));
+    sp -= n;
 }
 
 static inline void State_print_builtin(State const* state, FILE* dest, Handle<void> value) {
