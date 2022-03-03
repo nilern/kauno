@@ -91,7 +91,10 @@ static inline Handle<void> eval(State* state, Handle<void> env) {
                 }
             }
 
-            Handle<Locals> const env_ = Locals::create(*state, env, argc);
+            Handle<void> const closure_env = state->push(closure.data()->env);
+            Locals::create(*state, closure_env, argc);
+            state->pop_nth(1); // `closure_env`
+            Handle<Locals> const env_ = state->peek().unchecked_cast<Locals>();
 
             {
                 ORef<void>* arg = state->peekn(argc + 2);
