@@ -2,10 +2,12 @@
 #include <cstring>
 
 #include "pos.cpp"
+#include "object.cpp"
 #include "gc.cpp"
 #include "state.cpp"
 #include "lexer.cpp"
 #include "symbol.cpp"
+#include "ast.cpp"
 #include "parser.cpp"
 #include "globals.cpp"
 #include "eval.cpp"

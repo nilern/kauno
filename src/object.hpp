@@ -38,7 +38,10 @@ public:
 
     bool operator!=(ORef<T> other) const { return ptr_ != other.ptr_; }
 
-    bool is_instance(ORef<Type> super) const { return type() == super; }
+    bool is_instance_dyn(ORef<Type> super) const { return type() == super; }
+
+    template<typename S>
+    bool is_instance(State const& state) const { return is_instance_dyn(S::reify(state)); }
 
     template<typename U>
     ORef<U> unchecked_cast() const { return ORef<U>((U*)ptr_); }
@@ -61,7 +64,10 @@ public:
 
     T* data() const { return oref().data(); }
 
-    bool is_instance(ORef<Type> super) const { return oref_ptr_->is_instance(super); }
+    bool is_instance_dyn(ORef<Type> super) const { return oref().is_instance_dyn(super); }
+
+    template<typename S>
+    bool is_instance(State const& state) const { return oref().template is_instance<S>(state); }
 
     template<typename U>
     Handle<U> unchecked_cast() const { return Handle<U>((ORef<U>*)oref_ptr_); }
@@ -86,6 +92,8 @@ struct Type {
     bool has_indexed;
     size_t fields_count; // if is_bits then byte count else field_types count
     Field fields[0];
+
+    static ORef<Type> reify(State const& state);
 };
 
 Field::Field(ORef<Type> type_, size_t offset_)

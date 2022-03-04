@@ -25,6 +25,8 @@ struct Locals {
     static bool const HAS_INDEXED = true;
     static bool const INLINEABLE = false;
 
+    static ORef<Type> reify(State const& state) { return state.Locals; }
+
     static Handle<Locals> create(State& state, Handle<void> parent, size_t count) {
         size_t capacity = 2*count; // Load factor = 0.5
 
@@ -65,7 +67,7 @@ struct Locals {
             if (k == key) { return optional(values.data()->elements[i]); }
 
             if (!k.data()) {
-                return parent.is_instance(state.Locals) ?
+                return parent.is_instance<Locals>(state) ?
                             parent.unchecked_cast<Locals>().data()->find(state, key)
                           : optional<ORef<void>>();
             }

@@ -19,6 +19,8 @@ static inline size_t Symbol_hash(char const* name, size_t name_size) {
     return hash;
 }
 
+ORef<Type> Symbol::reify(State const& state) { return state.Symbol; }
+
 void SymbolTable::rehash() {
     size_t const new_capacity = capacity*2;
 

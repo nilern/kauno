@@ -15,6 +15,8 @@ struct Call {
     ORef<void> callee;
     size_t args_count;
     ORef<void> args[0];
+
+    static ORef<Type> reify(State const& state);
 };
 
 struct Fn {
@@ -27,6 +29,8 @@ struct Fn {
     static size_t const FIELDS_COUNT = 3;
     static bool const HAS_INDEXED = true;
     static bool const INLINEABLE = false;
+
+    static ORef<Type> reify(State const& state);
 };
 
 }

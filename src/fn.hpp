@@ -17,6 +17,8 @@ struct Fn {
     CodePtr code;
     size_t domain_count;
     ORef<void> domain[0]; // ORef<Type | NoneType>
+
+    static ORef<Type> reify(State const& state) { return state.Fn; }
 };
 
 struct Closure {
@@ -27,6 +29,8 @@ struct Closure {
     static size_t const FIELDS_COUNT = 2;
     static bool const HAS_INDEXED = false;
     static bool const INLINEABLE = true;
+
+    static ORef<Type> reify(State const& state) { return state.Closure; }
 
     static Handle<Closure> create(State& state, Handle<kauno::ast::Fn> code, Handle<void> env) {
         Closure* closure = static_cast<Closure*>(state.alloc(state.Closure.data()));

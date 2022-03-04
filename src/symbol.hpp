@@ -12,6 +12,8 @@ struct Symbol {
     size_t hash;
     size_t name_size;
     char name[0];
+
+    static ORef<Type> reify(State const& state);
 };
 
 static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t name_size);

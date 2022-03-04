@@ -3,6 +3,7 @@ README.md
 build.sh
 design.md
 src/arrays.hpp
+src/ast.cpp
 src/ast.hpp
 src/eval.cpp
 src/eval.hpp
@@ -15,6 +16,7 @@ src/lexer.cpp
 src/lexer.hpp
 src/locals.hpp
 src/main.cpp
+src/object.cpp
 src/object.hpp
 src/parser.cpp
 src/parser.hpp
