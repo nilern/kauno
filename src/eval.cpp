@@ -8,15 +8,17 @@ namespace kauno {
 
 static inline Handle<void> eval(State* state, ORef<void> oenv, ORef<void> oexpr) {
     while (true) {
-        if (oexpr.is_instance<Symbol>(*state)) {
-            ORef<Symbol> const symbol = oexpr.unchecked_cast<Symbol>();
+        optional<ORef<Symbol>> const opt_symbol = oexpr.try_cast<Symbol>(*state);
+        if (opt_symbol.has_value()) {
+            ORef<Symbol> const symbol = *opt_symbol;
 
-            if (oenv.is_instance<Locals>(*state)) {
-                ORef<Locals> const locals = oenv.unchecked_cast<Locals>();
+            optional<ORef<Locals>> opt_locals = oenv.try_cast<Locals>(*state);
+            if (opt_locals.has_value()) {
+                ORef<Locals> const locals = *opt_locals;
 
                 std::optional<ORef<void>> const opt_value = locals.data()->find(*state, symbol);
                 if (opt_value.has_value()) {
-                    return state->push(opt_value.value());
+                    return state->push(*opt_value);
                 }
             }
 
@@ -26,9 +28,12 @@ static inline Handle<void> eval(State* state, ORef<void> oenv, ORef<void> oexpr)
             }
 
             return state->push(var->value);
-        } else if (oexpr.is_instance<ast::Call>(*state)) {
+        }
+
+        optional<ORef<ast::Call>> const opt_call = oexpr.try_cast<ast::Call>(*state);
+        if (opt_call.has_value()) {
             Handle<void> const env = state->push(oenv);
-            Handle<ast::Call> const call = state->push(oexpr.unchecked_cast<ast::Call>());
+            Handle<ast::Call> const call = state->push(*opt_call);
 
             eval(state, env.oref(), call.data()->callee);
 
@@ -40,8 +45,10 @@ static inline Handle<void> eval(State* state, ORef<void> oenv, ORef<void> oexpr)
             state->pop_nth(1 + argc); // Pop `call`
 
             Handle<void> const callee = state->peek_nth(argc);
-            if (callee.is_instance<fn::Fn>(*state)) {
-                Handle<fn::Fn> fn = callee.unchecked_cast<fn::Fn>();
+
+            optional<Handle<fn::Fn>> const opt_fn = callee.try_cast<fn::Fn>(*state);
+            if (opt_fn.has_value()) {
+                Handle<fn::Fn> fn = *opt_fn;
 
                 if (argc != fn.data()->domain_count) {
                     exit(EXIT_FAILURE); // FIXME
@@ -52,8 +59,9 @@ static inline Handle<void> eval(State* state, ORef<void> oenv, ORef<void> oexpr)
                     for (size_t i = 0; i < argc; ++i, ++arg) {
                         ORef<void> const param_ann = fn.data()->domain[i];
 
-                        if (param_ann.is_instance<Type>(*state)) {
-                            ORef<Type> const param_type = param_ann.unchecked_cast<Type>();
+                        optional<ORef<Type>> opt_param_type = param_ann.try_cast<Type>(*state);
+                        if (opt_param_type.has_value()) {
+                            ORef<Type> const param_type = *opt_param_type;
 
                             if (!arg->is_instance_dyn(param_type)) {
                                 exit(EXIT_FAILURE); // FIXME
@@ -65,8 +73,11 @@ static inline Handle<void> eval(State* state, ORef<void> oenv, ORef<void> oexpr)
                 state->pop_nth(1 + argc); // env
                 fn = state->peek_nth(argc).unchecked_cast<fn::Fn>();
                 return fn.data()->code(state);
-            } else if (callee.is_instance<fn::Closure>(*state)) {
-                Handle<fn::Closure> const closure = callee.unchecked_cast<fn::Closure>();
+            }
+
+            optional<Handle<fn::Closure>> const opt_closure = callee.try_cast<fn::Closure>(*state);
+            if (opt_closure.has_value()) {
+                Handle<fn::Closure> const closure = *opt_closure;
 
                 Handle<ast::Fn> const code = state->push(closure.data()->code);
 
@@ -81,8 +92,9 @@ static inline Handle<void> eval(State* state, ORef<void> oenv, ORef<void> oexpr)
                     for (size_t i = 0; i < argc; ++i, ++arg) {
                         ORef<void> const param_ann = domain.data()->elements[i];
 
-                        if (param_ann.is_instance<Type>(*state)) {
-                            ORef<Type> const param_type = param_ann.unchecked_cast<Type>();
+                        optional<ORef<Type>> opt_param_type = param_ann.try_cast<Type>(*state);
+                        if (opt_param_type.has_value()) {
+                            ORef<Type> const param_type = *opt_param_type;
 
                             if (!arg->is_instance_dyn(param_type)) {
                                 exit(EXIT_FAILURE); // FIXME
@@ -105,19 +117,23 @@ static inline Handle<void> eval(State* state, ORef<void> oenv, ORef<void> oexpr)
                 oenv = oenv_.as_void();
                 oexpr = code.data()->body;
                 state->popn(argc + 5); // env & `callee` & args & `code` & `closure_env` & env_
-            } else {
-                exit(EXIT_FAILURE); // FIXME
+                continue;
             }
-        } else if (oexpr.is_instance<ast::Fn>(*state)) {
+
+            exit(EXIT_FAILURE); // FIXME
+        }
+
+        optional<ORef<ast::Fn>> const opt_fn = oexpr.try_cast<ast::Fn>(*state);
+        if (opt_fn.has_value()) {
             Handle<void> const env = state->push(oenv);
-            Handle<ast::Fn> const fn = state->push(oexpr.unchecked_cast<ast::Fn>());
+            Handle<ast::Fn> const fn = state->push(*opt_fn);
 
             fn::Closure::create(*state, fn, env);
             state->popn_nth(2, 2); // `env` & `fn`
             return state->peek(); // the closure
-        } else {
-            return state->push(oexpr);
         }
+
+        return state->push(oexpr);
     }
 }
 

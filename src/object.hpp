@@ -4,6 +4,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <optional>
+
+using std::optional;
 
 namespace kauno {
 
@@ -46,6 +49,11 @@ public:
     template<typename U>
     ORef<U> unchecked_cast() const { return ORef<U>((U*)ptr_); }
 
+    template<typename U>
+    optional<ORef<U>> try_cast(State const& state) const {
+        return is_instance<U>(state) ? optional(unchecked_cast<U>()) : optional<ORef<U>>();
+    }
+
     ORef<void> as_void() const { return unchecked_cast<void>(); }
 };
 
@@ -71,6 +79,11 @@ public:
 
     template<typename U>
     Handle<U> unchecked_cast() const { return Handle<U>((ORef<U>*)oref_ptr_); }
+
+    template<typename U>
+    optional<Handle<U>> try_cast(State const& state) const {
+        return is_instance<U>(state) ? optional(unchecked_cast<U>()) : optional<Handle<U>>();
+    }
 
     Handle<void> as_void() const { return unchecked_cast<void>(); }
 };
