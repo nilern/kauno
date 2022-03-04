@@ -4,6 +4,8 @@
 #include <cctype>
 #include <cstring>
 
+namespace kauno {
+
 void Lexer::Token::print(FILE* dest) const {
     fprintf(dest, "<%s \"", Lexer::Token::NAMES[(size_t)type]);
 
@@ -165,4 +167,6 @@ void Lexer::match(Lexer::Token::Type type) {
     } else {
         exit(EXIT_FAILURE); // FIXME
     }
+}
+
 }

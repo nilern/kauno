@@ -10,6 +10,8 @@
 #include "globals.cpp"
 #include "eval.cpp"
 
+using namespace kauno;
+
 int main(int argc, char* argv[]) {
     if (argc == 2) {
         State state(1024*1024, 1024*1024); // 1 MiB

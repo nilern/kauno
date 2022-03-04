@@ -6,6 +6,8 @@
 
 #include "state.hpp"
 
+namespace kauno {
+
 struct Symbol {
     size_t hash;
     size_t name_size;
@@ -41,5 +43,7 @@ private:
 
     friend Handle<Symbol> Symbol_new(State* state, char const* name, size_t name_size);
 };
+
+}
 
 #endif // SYMBOL_H

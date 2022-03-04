@@ -11,6 +11,8 @@
 #include "locals.hpp"
 #include "fn.hpp"
 
+namespace kauno {
+
 static inline Handle<void> builtin_prn(State* state) {
     State_print_builtin(state, stdout, state->peek());
     puts("");
@@ -380,4 +382,6 @@ static inline void State_print_builtin(State const* state, FILE* dest, Handle<vo
     } else {
         fprintf(dest, "<??? @ %p>", data);
     }
+}
+
 }

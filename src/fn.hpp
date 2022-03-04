@@ -5,7 +5,9 @@
 #include "ast.hpp"
 #include "locals.hpp"
 
+namespace kauno {
 class State;
+}
 
 namespace kauno::fn {
 

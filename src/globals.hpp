@@ -6,6 +6,8 @@
 #include "object.hpp"
 #include "symbol.hpp"
 
+namespace kauno {
+
 struct Var {
     ORef<void> value;
 };
@@ -47,5 +49,7 @@ public:
 private:
     void rehash();
 };
+
+}
 
 #endif // GLOBALS_H

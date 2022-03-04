@@ -10,7 +10,9 @@ using std::optional;
 #include "symbol.hpp"
 #include "state.hpp"
 
-using kauno::arrays::RefArray;
+namespace kauno {
+
+using arrays::RefArray;
 
 struct Locals {
     ORef<void> parent; // ORef<Locals | NoneType>
@@ -70,5 +72,7 @@ struct Locals {
         }
     }
 };
+
+}
 
 #endif // LOCALS_HPP

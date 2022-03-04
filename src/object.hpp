@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <cstdlib>
 
+namespace kauno {
+
 class State;
 
 struct Header {
@@ -98,5 +100,7 @@ Field::Field(ORef<Type> type_, size_t offset_)
 }
 
 struct None {};
+
+}
 
 #endif // OBJECT_H

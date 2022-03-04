@@ -4,6 +4,10 @@
 #include "state.hpp"
 #include "locals.hpp"
 
+namespace kauno {
+
 static inline Handle<void> eval(State* state, ORef<void> env /* ORef<Locals | NoneType> */, ORef<void> expr);
+
+}
 
 #endif // EVAL_H

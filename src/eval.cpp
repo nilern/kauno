@@ -4,6 +4,8 @@
 
 #include "fn.hpp"
 
+namespace kauno {
+
 static inline Handle<void> eval(State* state, ORef<void> oenv, ORef<void> oexpr) {
     while (true) {
         if (oexpr.is_instance(state->Symbol)) {
@@ -117,4 +119,6 @@ static inline Handle<void> eval(State* state, ORef<void> oenv, ORef<void> oexpr)
             return state->push(oexpr);
         }
     }
+}
+
 }

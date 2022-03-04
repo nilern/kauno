@@ -5,6 +5,8 @@
 
 #include "object.hpp"
 
+namespace kauno::gc {
+
 struct Granule {
     uintptr_t bits;
 };
@@ -58,5 +60,7 @@ public:
 
     void collect();
 };
+
+}
 
 #endif // GC_H

@@ -6,6 +6,8 @@
 
 #include "pos.hpp"
 
+namespace kauno {
+
 class Lexer {
 public:
     struct Token {
@@ -64,5 +66,7 @@ public:
 private:
     void look_ahead();
 };
+
+}
 
 #endif // LEXER_H

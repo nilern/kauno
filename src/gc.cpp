@@ -8,6 +8,8 @@
 #include "object.hpp"
 #include "state.hpp"
 
+namespace kauno::gc {
+
 Granule const ALIGNMENT_HOLE = {0};
 
 static inline bool granule_eq(Granule g1, Granule g2) { return g1.bits == g2.bits; }
@@ -150,4 +152,6 @@ void Heap::collect() {
     // Swap semispaces:
     std::swap(fromspace, tospace);
     free = (char*)fromspace.end;
+}
+
 }

@@ -9,10 +9,12 @@
 #include "globals.hpp"
 #include "ast.hpp"
 
+namespace kauno {
+
 static inline void State_print_builtin(State const* state, FILE* dest, Handle<void> value);
 
 class State {
-    Heap heap;
+    gc::Heap heap;
 
     ORef<void>* sp;
     size_t stack_size;
@@ -142,5 +144,7 @@ static inline void obj_field_set(State*, Handle<T> handle, size_t index, Handle<
     }
 }
 // TODO: obj_field_indexed_set
+
+}
 
 #endif // STATE_H

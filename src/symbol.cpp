@@ -2,6 +2,8 @@
 
 #include <cstdlib>
 
+namespace kauno {
+
 #if __WORDSIZE == 64
 size_t const FNV_PRIME = 1099511628211u;
 size_t const FNV_OFFSET_BASIS = 14695981039346656037u;
@@ -82,4 +84,6 @@ static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t n
             }
         }
     }
+}
+
 }

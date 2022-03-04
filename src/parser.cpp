@@ -9,6 +9,8 @@
 #include "state.hpp"
 #include "arrays.hpp"
 
+namespace kauno {
+
 static inline void parse_param(State* state, Lexer* lexer);
 static inline Handle<void> parse_call(State* state, Lexer* lexer);
 static inline Handle<void> parse_callee(State* state, Lexer* lexer);
@@ -162,4 +164,6 @@ static inline size_t parse_args(State* state, Lexer* lexer) {
 
     lexer->next(); // discard ')'
     return argc;
+}
+
 }
