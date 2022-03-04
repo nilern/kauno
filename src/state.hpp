@@ -84,7 +84,7 @@ public:
 
     SymbolTable* symbols() { return &symbols_; }
 
-    struct Var* global(Handle<struct Symbol> name) { return globals.find(name.oref()); }
+    struct Var* global(ORef<struct Symbol> name) { return globals.find(name); }
 
     void dump_stack(FILE* dest) {
         for (ORef<void>* p = &stack[0]; p < sp; ++p) {
