@@ -20,10 +20,17 @@ struct Locals {
     size_t capacity;
     ORef<Symbol> keys[0];
 
-    static bool const IS_BITS = false;
-    static size_t const FIELDS_COUNT = 3;
-    static bool const HAS_INDEXED = true;
-    static bool const INLINEABLE = false;
+    static ORef<Type> create_reified(State& state) {
+        size_t const fields_count = 3;
+
+        Type* type = static_cast<Type*>(state.alloc_indexed(state.Type.data(), fields_count));
+        *type = Type::create_indexed(state, alignof(struct Locals), sizeof(struct Locals), fields_count);
+        type->fields[0] = (struct Field){ORef<struct Type>(nullptr), offsetof(struct Locals, parent)};
+        type->fields[1] = (struct Field){state.RefArray, offsetof(struct Locals, values)};
+        type->fields[2] = (struct Field){state.Symbol, offsetof(struct Locals, keys)};
+
+        return ORef(type);
+    }
 
     static ORef<Type> reify(State const& state) { return state.Locals; }
 
@@ -44,6 +51,7 @@ struct Locals {
         return state.push(ORef(locals));
     }
 
+    // FIXME: Error on duplicates
     void insert(ORef<Symbol> key, ORef<void> value) {
         size_t const hash = key.data()->hash;
 

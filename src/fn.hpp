@@ -25,10 +25,16 @@ struct Closure {
     ORef<kauno::ast::Fn> code;
     ORef<void> env; // ORef<Locals | NoneType>
 
-    static bool const IS_BITS = false;
-    static size_t const FIELDS_COUNT = 2;
-    static bool const HAS_INDEXED = false;
-    static bool const INLINEABLE = true;
+    static ORef<Type> create_reified(State& state) {
+        size_t const fields_count = 2;
+
+        Type* type = static_cast<struct Type*>(state.alloc_indexed(state.Type.data(), fields_count));
+        *type = Type::create_record(state, alignof(Closure), sizeof(Closure), true, fields_count);
+        type->fields[0] = (struct Field){state.AstFn, offsetof(Closure, code)};
+        type->fields[1] = (struct Field){ORef<struct Type>(nullptr), offsetof(Closure, env)};
+
+        return ORef(type);
+    }
 
     static ORef<Type> reify(State const& state) { return state.Closure; }
 

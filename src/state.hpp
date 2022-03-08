@@ -3,6 +3,7 @@
 
 #include <cstdio>
 #include <utility>
+#include <random>
 
 #include "gc.hpp"
 #include "symbol.hpp"
@@ -19,6 +20,8 @@ class State {
     ORef<void>* sp;
     size_t stack_size;
     ORef<void>* stack; // TODO: Growable ("infinite") stack
+
+    std::mt19937_64 type_hashes_; // FIXME: assumes 64-bit (or less) hash size
 
     SymbolTable symbols_;
 
@@ -40,6 +43,7 @@ public:
     ORef<struct Type> Closure;
     ORef<struct Type> NoneType;
     ORef<struct Type> RefArray;
+    ORef<struct Type> TypesMap;
     ORef<struct Type> Locals;
 
     ORef<struct None> None;
@@ -59,6 +63,8 @@ public:
     // HACK:
     void* alloc(struct Type* type) { return heap.alloc(type); }
     void* alloc_indexed(struct Type* type, size_t indexed_count) { return heap.alloc_indexed(type, indexed_count); }
+
+    size_t create_type_hash() { return type_hashes_(); }
 
     template<typename T>
     Handle<T> push(ORef<T> value) {

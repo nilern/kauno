@@ -8,6 +8,7 @@
 #include <algorithm>
 
 #include "arrays.hpp"
+#include "typesmap.hpp"
 #include "locals.hpp"
 #include "fn.hpp"
 
@@ -25,6 +26,8 @@ State::State(size_t heap_size, size_t stack_size_) :
 
     stack_size(stack_size_),
     stack((ORef<void>*)malloc(stack_size_)),
+
+    type_hashes_(std::mt19937_64(std::random_device()())),
 
     symbols_(),
 
@@ -45,6 +48,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     Closure(ORef<struct Type>(nullptr)),
     NoneType(ORef<struct Type>(nullptr)),
     RefArray(ORef<struct Type>(nullptr)),
+    TypesMap(ORef<struct Type>(nullptr)),
     Locals(ORef<struct Type>(nullptr)),
 
     None(ORef<struct None>(nullptr))
@@ -55,28 +59,12 @@ State::State(size_t heap_size, size_t stack_size_) :
     size_t const Type_fields_count = 6;
     size_t const Type_size = sizeof(struct Type) + Type_fields_count*sizeof(Field);
     struct Type* tmp_Type = (struct Type*)malloc(Type_size);
-    *tmp_Type = (struct Type){
-        .align = alignof(struct Type),
-        .min_size = sizeof(struct Type),
-        .inlineable = false,
-        .is_bits = false,
-        .has_indexed = true,
-        .fields_count = Type_fields_count,
-        .fields = {}
-    };
+    *tmp_Type = Type::create_indexed(*this, alignof(struct Type), sizeof(struct Type), Type_fields_count);
 
     size_t const Field_fields_count = 4;
     size_t const Field_size = sizeof(struct Type) + Field_fields_count*sizeof(Field);
     struct Type* const tmp_Field = (struct Type*)malloc(Field_size);
-    *tmp_Field = (struct Type){
-        .align = alignof(struct Field),
-        .min_size = sizeof(struct Field),
-        .inlineable = true,
-        .is_bits = false,
-        .has_indexed = false,
-        .fields_count = Field_fields_count,
-        .fields = {}
-    };
+    *tmp_Field = Type::create_record(*this, alignof(struct Field), sizeof(struct Field), true, Field_fields_count);
     tmp_Type->fields[5] = (struct Field){ORef(tmp_Field), offsetof(struct Type, fields)};
 
 
@@ -91,26 +79,10 @@ State::State(size_t heap_size, size_t stack_size_) :
 
 
     USize = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
-    *USize.data() = (struct Type){
-        .align = alignof(size_t),
-        .min_size = sizeof(size_t),
-        .inlineable = true,
-        .is_bits = true,
-        .has_indexed = false,
-        .fields_count = 0,
-        .fields = {}
-    };
+    *USize.data() = Type::create_bits(*this, alignof(size_t), sizeof(size_t), true);
 
     Bool = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
-    *Bool.data() = (struct Type){
-        .align = alignof(bool),
-        .min_size = sizeof(bool),
-        .inlineable = true,
-        .is_bits = true,
-        .has_indexed = false,
-        .fields_count = 0,
-        .fields = {}
-    };
+    *Bool.data() = Type::create_bits(*this, alignof(bool), sizeof(bool), true);
 
 
     Type.data()->fields[0] = (struct Field){USize, offsetof(struct Type, align)};
@@ -131,158 +103,54 @@ State::State(size_t heap_size, size_t stack_size_) :
 
 
     UInt8 = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
-    *UInt8.data() = (struct Type){
-        .align = alignof(uint8_t),
-        .min_size = sizeof(uint8_t),
-        .inlineable = true,
-        .is_bits = true,
-        .has_indexed = false,
-        .fields_count = 0,
-        .fields = {}
-    };
+    *UInt8.data() = Type::create_bits(*this, alignof(uint8_t), sizeof(uint8_t), true);
 
     Int64 = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
-    *Int64.data() = (struct Type){
-        .align = alignof(int64_t),
-        .min_size = sizeof(int64_t),
-        .inlineable = true,
-        .is_bits = true,
-        .has_indexed = false,
-        .fields_count = 0,
-        .fields = {}
-    };
+    *Int64.data() = Type::create_bits(*this, alignof(int64_t), sizeof(int64_t), true);
 
     size_t const Symbol_fields_count = 2;
     Symbol = ORef((struct Type*)heap.alloc_indexed(Type.data(), Symbol_fields_count));
-    *Symbol.data() = (struct Type){
-        .align = alignof(struct Symbol),
-        .min_size = sizeof(struct Symbol),
-        .inlineable = false,
-        .is_bits = false,
-        .has_indexed = true,
-        .fields_count = Symbol_fields_count,
-        .fields = {}
-    };
+    *Symbol.data() = Type::create_indexed(*this, alignof(struct Symbol), sizeof(struct Symbol), Symbol_fields_count);
     Symbol.data()->fields[0] = (struct Field){ORef(USize), offsetof(struct Symbol, hash)};
     Symbol.data()->fields[1] = (struct Field){ORef(UInt8), offsetof(struct Symbol, name)};
 
     size_t const Var_fields_count = 1;
     Var = ORef((struct Type*)heap.alloc_indexed(Type.data(), Var_fields_count));
-    *Var.data() = (struct Type){
-        .align = alignof(struct Var),
-        .min_size = sizeof(struct Var),
-        .inlineable = false,
-        .is_bits = false,
-        .has_indexed = false,
-        .fields_count = Var_fields_count,
-        .fields = {}
-    };
+    *Var.data() = Type::create_record(*this, alignof(struct Var), sizeof(struct Var), false, Var_fields_count);
     Var.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr), offsetof(struct Var, value)};
 
     size_t const Call_fields_count = 2;
     Call = ORef((struct Type*)heap.alloc_indexed(Type.data(), Call_fields_count));
-    *Call.data() = (struct Type){
-        .align = alignof(kauno::ast::Call),
-        .min_size = sizeof(kauno::ast::Call),
-        .inlineable = false,
-        .is_bits = false,
-        .has_indexed = true,
-        .fields_count = Call_fields_count,
-        .fields = {}
-    };
+    *Call.data() = Type::create_indexed(*this, alignof(kauno::ast::Call), sizeof(kauno::ast::Call), Call_fields_count);
     Call.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr), offsetof(kauno::ast::Call, callee)};
     Call.data()->fields[1] = (struct Field){ORef<struct Type>(nullptr), offsetof(kauno::ast::Call, args)};
 
     CodePtr = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
-    *CodePtr.data() = (struct Type){
-        .align = alignof(kauno::fn::CodePtr),
-        .min_size = sizeof(kauno::fn::CodePtr),
-        .inlineable = true,
-        .is_bits = true,
-        .has_indexed = false,
-        .fields_count = 0,
-        .fields = {}
-    };
+    *CodePtr.data() = Type::create_bits(*this, alignof(kauno::fn::CodePtr), sizeof(kauno::fn::CodePtr), true);
 
     size_t const Fn_fields_count = 1;
     Fn = ORef((struct Type*)heap.alloc_indexed(Type.data(), Fn_fields_count));
-    *Fn.data() = (struct Type){
-        .align = alignof(kauno::fn::Fn),
-        .min_size = sizeof(kauno::fn::Fn),
-        .inlineable = true,
-        .is_bits = false,
-        .has_indexed = false,
-        .fields_count = Fn_fields_count,
-        .fields = {}
-    };
+    *Fn.data() = Type::create_record(*this, alignof(kauno::fn::Fn), sizeof(kauno::fn::Fn), true, Fn_fields_count);
     Fn.data()->fields[0] = (struct Field){CodePtr, offsetof(kauno::fn::Fn, code)};
 
     size_t const None_fields_count = 0;
     NoneType = ORef((struct Type*)heap.alloc_indexed(Type.data(), None_fields_count));
-    *NoneType.data() = (struct Type){
-        .align = alignof(struct None),
-        .min_size = sizeof(struct None),
-        .inlineable = true,
-        .is_bits = false,
-        .has_indexed = false,
-        .fields_count = None_fields_count,
-        .fields = {}
-    };
+    *NoneType.data() = Type::create_record(*this, alignof(struct None), sizeof(struct None), true, None_fields_count);
 
     size_t const RefArray_fields_count = 1;
     RefArray = ORef((struct Type*)heap.alloc_indexed(Type.data(), RefArray_fields_count));
-    *RefArray.data() = (struct Type){
-        .align = alignof(kauno::arrays::RefArray<ORef<void>>),
-        .min_size = sizeof(kauno::arrays::RefArray<ORef<void>>),
-        .inlineable = false,
-        .is_bits = false,
-        .has_indexed = true,
-        .fields_count = RefArray_fields_count,
-        .fields = {}
-    };
+    *RefArray.data() = Type::create_indexed(*this, alignof(kauno::arrays::RefArray<ORef<void>>), sizeof(kauno::arrays::RefArray<ORef<void>>),
+                                            RefArray_fields_count);
     RefArray.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr),
             offsetof(kauno::arrays::RefArray<ORef<void>>, elements)};
 
-    AstFn = ORef((struct Type*)heap.alloc_indexed(Type.data(), kauno::ast::Fn::FIELDS_COUNT));
-    *AstFn.data() = (struct Type){
-        .align = alignof(kauno::ast::Fn),
-        .min_size = sizeof(kauno::ast::Fn),
-        .inlineable = kauno::ast::Fn::INLINEABLE,
-        .is_bits = kauno::ast::Fn::IS_BITS,
-        .has_indexed = kauno::ast::Fn::HAS_INDEXED,
-        .fields_count = kauno::ast::Fn::FIELDS_COUNT,
-        .fields = {}
-    };
-    AstFn.data()->fields[0] = (struct Field){RefArray, offsetof(kauno::ast::Fn, domain)};
-    AstFn.data()->fields[1] = (struct Field){ORef<struct Type>(nullptr), offsetof(kauno::ast::Fn, body)};
-    AstFn.data()->fields[2] = (struct Field){Symbol, offsetof(kauno::ast::Fn, params)};
+    TypesMap = kauno::TypesMap::create_reified(*this);
 
-    Locals = ORef((struct Type*)heap.alloc_indexed(Type.data(), Locals::FIELDS_COUNT));
-    *Locals.data() = (struct Type){
-        .align = alignof(struct Locals),
-        .min_size = sizeof(struct Locals),
-        .inlineable = Locals::INLINEABLE,
-        .is_bits = Locals::IS_BITS,
-        .has_indexed = Locals::HAS_INDEXED,
-        .fields_count = Locals::FIELDS_COUNT,
-        .fields = {}
-    };
-    Locals.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr), offsetof(struct Locals, parent)};
-    Locals.data()->fields[1] = (struct Field){RefArray, offsetof(struct Locals, values)};
-    Locals.data()->fields[2] = (struct Field){Symbol, offsetof(struct Locals, keys)};
+    AstFn = ast::Fn::create_reified(*this);
 
-    Closure = ORef(static_cast<struct Type*>(heap.alloc_indexed(Type.data(), kauno::fn::Closure::FIELDS_COUNT)));
-    *Closure.data() = (struct Type){
-        .align = alignof(kauno::fn::Closure),
-        .min_size = sizeof(kauno::fn::Closure),
-        .inlineable = kauno::fn::Closure::INLINEABLE,
-        .is_bits = kauno::fn::Closure::IS_BITS,
-        .has_indexed = kauno::fn::Closure::HAS_INDEXED,
-        .fields_count = kauno::fn::Closure::FIELDS_COUNT,
-        .fields = {}
-    };
-    Locals.data()->fields[0] = (struct Field){AstFn, offsetof(kauno::fn::Closure, code)};
-    Locals.data()->fields[1] = (struct Field){ORef<struct Type>(nullptr), offsetof(kauno::fn::Closure, env)};
+    Locals = Locals::create_reified(*this);
+
+    Closure = fn::Closure::create_reified(*this);
 
     None = ORef(static_cast<struct None*>(heap.alloc(NoneType.data())));
 

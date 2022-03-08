@@ -25,10 +25,7 @@ struct Fn {
     size_t arity;
     ORef<Symbol> params[0];
 
-    static bool const IS_BITS = false;
-    static size_t const FIELDS_COUNT = 3;
-    static bool const HAS_INDEXED = true;
-    static bool const INLINEABLE = false;
+    static ORef<Type> create_reified(State& state);
 
     static ORef<Type> reify(State const& state);
 };

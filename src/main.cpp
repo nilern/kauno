@@ -7,6 +7,7 @@
 #include "state.cpp"
 #include "lexer.cpp"
 #include "symbol.cpp"
+#include "typesmap.hpp"
 #include "ast.cpp"
 #include "parser.cpp"
 #include "globals.cpp"

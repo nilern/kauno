@@ -26,3 +26,4 @@ src/state.cpp
 src/state.hpp
 src/symbol.cpp
 src/symbol.hpp
+src/typesmap.hpp

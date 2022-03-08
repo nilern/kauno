@@ -98,6 +98,7 @@ struct Field {
 };
 
 struct Type {
+    size_t hash;
     size_t align;
     size_t min_size;
     bool inlineable;
@@ -107,6 +108,23 @@ struct Type {
     Field fields[0];
 
     static ORef<Type> reify(State const& state);
+
+private:
+    Type(State& state,
+         size_t align_, size_t min_size_, bool inlineable_, bool is_bits_, bool has_indexed_, size_t fields_count_);
+
+public:
+    static Type create_bits(State& state, size_t align, size_t size, bool inlineable) {
+        return Type(state, align, size, inlineable, true, false, 0);
+    }
+
+    static Type create_record(State& state, size_t align, size_t size, bool inlineable, size_t fields_count) {
+        return Type(state, align, size, inlineable, false, false, fields_count);
+    }
+
+    static Type create_indexed(State& state, size_t align, size_t min_size, size_t fields_count) {
+        return Type(state, align, min_size, false, false, true, fields_count);
+    }
 };
 
 Field::Field(ORef<Type> type_, size_t offset_)
