@@ -14,11 +14,11 @@
 
 namespace kauno {
 
-static inline Handle<void> builtin_prn(State* state) {
-    State_print_builtin(state, stdout, state->peek());
+static inline Handle<void> builtin_prn(State& state) {
+    State_print_builtin(state, stdout, state.peek());
     puts("");
-    state->pop_nth(1); // Pop self
-    return state->peek(); // FIXME
+    state.pop_nth(1); // Pop self
+    return state.peek(); // FIXME
 }
 
 State::State(size_t heap_size, size_t stack_size_) :
@@ -156,8 +156,8 @@ State::State(size_t heap_size, size_t stack_size_) :
 
 
     Handle<struct Type> const Type_handle = push(ORef(Type));
-    Handle<struct Symbol> const Type_symbol = Symbol_new(this, "Type", 4);
-    Handle<struct Var> const Type_var = Var_new(this, Type_handle.as_void());
+    Handle<struct Symbol> const Type_symbol = Symbol_new(*this, "Type", 4);
+    Handle<struct Var> const Type_var = Var_new(*this, Type_handle.as_void());
     globals.insert(Type_symbol.oref(), Type_var.oref());
     popn(3);
 
@@ -169,8 +169,8 @@ State::State(size_t heap_size, size_t stack_size_) :
     };
     prn.data()->domain[0] = None.as_void();
     Handle<kauno::fn::Fn> const prn_handle = push(ORef(prn));
-    Handle<struct Symbol> const prn_symbol = Symbol_new(this, "prn", 3);
-    Handle<struct Var> const prn_var = Var_new(this, prn_handle.as_void());
+    Handle<struct Symbol> const prn_symbol = Symbol_new(*this, "prn", 3);
+    Handle<struct Var> const prn_var = Var_new(*this, prn_handle.as_void());
     globals.insert(prn_symbol.oref(), prn_var.oref());
     popn(3);
 }
@@ -213,39 +213,39 @@ void State::popn_nth(size_t i, size_t n) {
     sp -= n;
 }
 
-static inline void State_print_builtin(State const* state, FILE* dest, Handle<void> value) {
+static inline void State_print_builtin(State const& state, FILE* dest, Handle<void> value) {
     ORef<Type> type = value.type();
     void* data = value.data();
-    if (type == state->Type) {
+    if (type == state.Type) {
         fprintf(dest, "<Type @ %p>", data);
-    } else if (type == state->Field) {
+    } else if (type == state.Field) {
         fprintf(dest, "<Field @ %p>", data);
-    } else if (type == state->Symbol) {
+    } else if (type == state.Symbol) {
         Symbol* symbol = (Symbol*)data;
 
         fputc('\'', dest);
         for (size_t i = 0; i < symbol->name_size; ++i) {
             fputc(symbol->name[i], dest);
         }
-    } else if (type == state->Var) {
+    } else if (type == state.Var) {
         fputs("<Var>", dest);
-    } else if (type == state->AstFn) {
+    } else if (type == state.AstFn) {
         fprintf(dest, "<AstFn @ %p>", data);
-    } else if (type == state->Call) {
+    } else if (type == state.Call) {
         fprintf(dest, "<Call @ %p>", data);
-    } else if (type == state->Fn) {
+    } else if (type == state.Fn) {
         fprintf(dest, "<Fn @ %p>", data);
-    } else if (type == state->CodePtr) {
+    } else if (type == state.CodePtr) {
         fprintf(dest, "<CodePtr @ %p>", data);
-    } else if (type == state->Closure) {
+    } else if (type == state.Closure) {
         fprintf(dest, "<Closure @ %p>", data);
-    } else if (type == state->UInt8) {
+    } else if (type == state.UInt8) {
         fprintf(dest, "%u", *(uint8_t*)data);
-    } else if (type == state->Int64) {
+    } else if (type == state.Int64) {
         fprintf(dest, "%ld", *(int64_t*)data);
-    } else if (type == state->USize) {
+    } else if (type == state.USize) {
         fprintf(dest, "%zu", *(size_t*)data);
-    } else if (type == state->Bool) {
+    } else if (type == state.Bool) {
         fputs(*(bool*)data ? "True" : "False", dest);
     } else {
         fprintf(dest, "<??? @ %p>", data);

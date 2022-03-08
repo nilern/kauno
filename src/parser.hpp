@@ -6,7 +6,7 @@
 
 namespace kauno {
 
-static inline Handle<void> parse_expr(State* state, Lexer* lexer);
+static inline Handle<void> parse_expr(State& state, Lexer* lexer);
 
 }
 

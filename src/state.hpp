@@ -12,7 +12,7 @@
 
 namespace kauno {
 
-static inline void State_print_builtin(State const* state, FILE* dest, Handle<void> value);
+static inline void State_print_builtin(State const& state, FILE* dest, Handle<void> value);
 
 class State {
     gc::Heap heap;
@@ -97,14 +97,14 @@ public:
     void dump_stack(FILE* dest) {
         for (ORef<void>* p = &stack[0]; p < sp; ++p) {
             fprintf(dest, "[%zd] = ", sp - p);
-            State_print_builtin(this, dest, Handle(p));
+            State_print_builtin(*this, dest, Handle(p));
             fputs("\n", dest);
         }
     }
 };
 
 template<typename T, typename F>
-ORef<F> obj_field(State* state, Handle<T> handle, size_t index) {
+ORef<F> obj_field(State& state, Handle<T> handle, size_t index) {
     ORef const obj = Handle_oref(handle);
 
     Type* const type = obj_type(obj);
@@ -115,7 +115,7 @@ ORef<F> obj_field(State* state, Handle<T> handle, size_t index) {
     Field const field = type->fields[index];
 
     if (field.inlined) {
-        F* const field_obj = state->alloc(field.type.data());
+        F* const field_obj = state.alloc(field.type.data());
         obj = Handle_oref(handle); // Reload after potential collection
         memcpy(field_obj, (void*)((char*)obj_data(obj) + field.offset), field.size);
         return ORef(field_obj);
@@ -126,7 +126,7 @@ ORef<F> obj_field(State* state, Handle<T> handle, size_t index) {
 // TODO: field_indexed
 
 template<typename T, typename F>
-static inline void obj_field_set(State*, Handle<T> handle, size_t index, Handle<F> new_val_handle) {
+static inline void obj_field_set(Handle<T> handle, size_t index, Handle<F> new_val_handle) {
     ORef const obj = Handle_oref(handle);
 
     Type* const type = obj_type(obj);

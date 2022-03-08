@@ -49,8 +49,8 @@ void SymbolTable::rehash() {
     symbols = new_symbols;
 }
 
-static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t name_size) {
-    SymbolTable* symbols = state->symbols();
+static inline Handle<Symbol> Symbol_new(State& state, char const* name, size_t name_size) {
+    SymbolTable* symbols = state.symbols();
     size_t const hash = Symbol_hash(name, name_size);
 
     while (true) {
@@ -64,7 +64,7 @@ static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t n
                     break; // continue outer loop
                 } else {
                     // Construct:
-                    Symbol* symbol = (Symbol*)state->alloc_indexed(state->Symbol.data(), name_size);
+                    Symbol* symbol = (Symbol*)state.alloc_indexed(state.Symbol.data(), name_size);
                     *symbol = (Symbol){
                         .hash = hash,
                         .name_size = name_size,
@@ -76,13 +76,13 @@ static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t n
                     ++symbols->count;
                     symbols->symbols[i] = symbol;
 
-                    return state->push(ORef(symbol));
+                    return state.push(ORef(symbol));
                 }
             } else if (isymbol->hash == hash
                        && isymbol->name_size == name_size
                        && strncmp(isymbol->name, name, name_size) == 0)
             {
-                return state->push(ORef(isymbol));
+                return state.push(ORef(isymbol));
             }
         }
     }

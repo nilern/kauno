@@ -6,7 +6,7 @@
 
 namespace kauno {
 
-static inline Handle<void> eval(State* state, ORef<void> env /* ORef<Locals | NoneType> */, ORef<void> expr);
+static inline Handle<void> eval(State& state, ORef<void> env /* ORef<Locals | NoneType> */, ORef<void> expr);
 
 }
 

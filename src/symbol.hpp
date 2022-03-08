@@ -16,7 +16,7 @@ struct Symbol {
     static ORef<Type> reify(State const& state);
 };
 
-static inline Handle<Symbol> Symbol_new(State* state, char const* name, size_t name_size);
+static inline Handle<Symbol> Symbol_new(State& state, char const* name, size_t name_size);
 
 class SymbolTable {
     size_t count;
@@ -43,7 +43,7 @@ public:
 private:
     void rehash();
 
-    friend Handle<Symbol> Symbol_new(State* state, char const* name, size_t name_size);
+    friend Handle<Symbol> Symbol_new(State& state, char const* name, size_t name_size);
 };
 
 }

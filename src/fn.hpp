@@ -11,7 +11,7 @@ class State;
 
 namespace kauno::fn {
 
-typedef Handle<void> (*CodePtr)(State* state);
+typedef Handle<void> (*CodePtr)(State& state);
 
 struct Fn {
     CodePtr code;
