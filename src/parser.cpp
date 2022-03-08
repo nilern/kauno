@@ -43,7 +43,7 @@ static inline Handle<void> parse_expr(State* state, Lexer* lexer) {
 
         Handle<void> const body = parse_expr(state, lexer);
 
-        Handle<kauno::arrays::RefArray<void>> domain = kauno::arrays::RefArray<void>::create(*state, arity);
+        Handle<kauno::arrays::RefArray<void>> domain = state->push(kauno::arrays::RefArray<void>::create(*state, arity));
 
         kauno::ast::Fn* fn = static_cast<kauno::ast::Fn*>(state->alloc_indexed(state->AstFn.data(), arity));
         *fn = (kauno::ast::Fn){

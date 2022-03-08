@@ -37,17 +37,16 @@ struct Locals {
     static Handle<Locals> create(State& state, Handle<void> parent, size_t count) {
         size_t capacity = 2*count; // Load factor = 0.5
 
-        Handle<RefArray<void>> const values = RefArray<void>::create(state, capacity);
+        ORef<RefArray<void>> const values = RefArray<void>::create(state, capacity);
 
         Locals* const locals = static_cast<Locals*>(state.alloc_indexed(state.Locals.data(), capacity));
         *locals = (Locals){
             .parent = parent.oref(),
-            .values = values.oref(),
+            .values = values,
             .capacity = capacity,
             .keys = {}
         };
 
-        state.pop(); // `values`
         return state.push(ORef(locals));
     }
 

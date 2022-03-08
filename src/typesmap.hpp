@@ -50,9 +50,8 @@ class TypesMap {
         size_t const cap = capacity();
         size_t const new_capacity = cap * 2;
 
-        ORef<RefArray<Type>> const new_keys = RefArray<Type>::create(state, arity_ * new_capacity).oref();
-        ORef<RefArray<void>> const new_values = RefArray<void>::create(state, new_capacity).oref();
-        state.popn(2); // keys & values
+        ORef<RefArray<Type>> const new_keys = RefArray<Type>::create(state, arity_ * new_capacity);
+        ORef<RefArray<void>> const new_values = RefArray<void>::create(state, new_capacity);
 
         for (size_t i = 0; i < cap; ++i) {
             size_t const ki = arity_ * i;
@@ -97,11 +96,9 @@ public:
     TypesMap(State& state, size_t arity) :
         arity_(arity),
         count_(0),
-        keys_(RefArray<Type>::create(state, arity * 2).oref()),
-        values_(RefArray<void>::create(state, 2).oref())
-    {
-        state.popn(2); // keys & values
-    }
+        keys_(RefArray<Type>::create(state, arity * 2)),
+        values_(RefArray<void>::create(state, 2))
+    {}
 
     optional<ORef<void>> get(ORef<Type> const* types) const {
         size_t const hash = hash_types(types);
