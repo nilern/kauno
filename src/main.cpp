@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
         puts("\n---\n");
 
         Lexer lexer(argv[1], strlen(argv[1]));
-        Handle<void> const expr = parse_expr(state, &lexer);
+        Handle<void> const expr = parse_expr(state, lexer);
         State_print_builtin(state, stdout, expr);
         puts("");
 

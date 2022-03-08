@@ -11,35 +11,35 @@
 
 namespace kauno {
 
-static inline void parse_param(State& state, Lexer* lexer);
-static inline Handle<void> parse_call(State& state, Lexer* lexer);
-static inline Handle<void> parse_callee(State& state, Lexer* lexer);
-static inline size_t parse_args(State& state, Lexer* lexer);
+static inline void parse_param(State& state, Lexer& lexer);
+static inline Handle<void> parse_call(State& state, Lexer& lexer);
+static inline Handle<void> parse_callee(State& state, Lexer& lexer);
+static inline size_t parse_args(State& state, Lexer& lexer);
 
 // expr ::= 'fn' '(' (param (',' param)*)? ')' '->' expr
 //        | call
-static inline Handle<void> parse_expr(State& state, Lexer* lexer) {
-    if (lexer->peek().type == Lexer::Token::Type::FN) {
-        lexer->next();
+static inline Handle<void> parse_expr(State& state, Lexer& lexer) {
+    if (lexer.peek().type == Lexer::Token::Type::FN) {
+        lexer.next();
 
-        lexer->match(Lexer::Token::Type::LPAREN);
+        lexer.match(Lexer::Token::Type::LPAREN);
 
         size_t arity = 0;
-        if (lexer->peek().type != Lexer::Token::Type::RPAREN) {
+        if (lexer.peek().type != Lexer::Token::Type::RPAREN) {
             parse_param(state, lexer);
             ++arity;
 
-            while (lexer->peek().type != Lexer::Token::Type::RPAREN) {
-                lexer->match(Lexer::Token::Type::COMMA);
+            while (lexer.peek().type != Lexer::Token::Type::RPAREN) {
+                lexer.match(Lexer::Token::Type::COMMA);
                 parse_param(state, lexer);
                 ++arity;
             }
         }
         ORef<Symbol>* const params = (ORef<Symbol>*)(state.peekn(arity));
 
-        lexer->next(); // discard ')'
+        lexer.next(); // discard ')'
 
-        lexer->match(Lexer::Token::Type::ARROW);
+        lexer.match(Lexer::Token::Type::ARROW);
 
         Handle<void> const body = parse_expr(state, lexer);
 
@@ -66,10 +66,10 @@ static inline Handle<void> parse_expr(State& state, Lexer* lexer) {
 }
 
 // call ::= callee args?
-static inline Handle<void> parse_call(State& state, Lexer* lexer) {
+static inline Handle<void> parse_call(State& state, Lexer& lexer) {
     Handle<void> const callee = parse_callee(state, lexer);
 
-    if (lexer->peek().type == Lexer::Token::Type::LPAREN) {
+    if (lexer.peek().type == Lexer::Token::Type::LPAREN) {
         size_t const argc = parse_args(state, lexer);
 
         kauno::ast::Call* const call = (kauno::ast::Call*)state.alloc_indexed(state.Call.data(), argc);
@@ -89,11 +89,11 @@ static inline Handle<void> parse_call(State& state, Lexer* lexer) {
 }
 
 // param ::= VAR
-static inline void parse_param(State& state, Lexer* lexer) {
-    Lexer::Token const tok = lexer->peek();
+static inline void parse_param(State& state, Lexer& lexer) {
+    Lexer::Token const tok = lexer.peek();
 
     if (tok.type == Lexer::Token::Type::VAR) {
-        lexer->next();
+        lexer.next();
         Symbol_new(state, tok.chars, tok.len).template unchecked_cast<void>();
     } else {
         exit(EXIT_FAILURE); // FIXME
@@ -101,19 +101,19 @@ static inline void parse_param(State& state, Lexer* lexer) {
 }
 
 // callee ::= '(' expr ')' | VAR | INT
-static inline Handle<void> parse_callee(State& state, Lexer* lexer) {
-    Lexer::Token const tok = lexer->peek();
+static inline Handle<void> parse_callee(State& state, Lexer& lexer) {
+    Lexer::Token const tok = lexer.peek();
 
     switch (tok.type) {
     case Lexer::Token::Type::LPAREN: {
-        lexer->next();
+        lexer.next();
         Handle<void> const expr = parse_expr(state, lexer);
-        lexer->match(Lexer::Token::Type::RPAREN);
+        lexer.match(Lexer::Token::Type::RPAREN);
         return expr;
     }
 
     case Lexer::Token::Type::VAR: {
-        lexer->next();
+        lexer.next();
 
         return Symbol_new(state, tok.chars, tok.len).template unchecked_cast<void>();
     }
@@ -122,7 +122,7 @@ static inline Handle<void> parse_callee(State& state, Lexer* lexer) {
         // FIXME: Bignums instead of overflow bugginess:
         // TODO: Return smallest possible type:
 
-        lexer->next();
+        lexer.next();
 
         int64_t n = 0;
         for (size_t i = 0; i < tok.len; ++i) {
@@ -145,24 +145,24 @@ static inline Handle<void> parse_callee(State& state, Lexer* lexer) {
 }
 
 // args ::= '(' (expr (',' expr)*)? ')'
-static inline size_t parse_args(State& state, Lexer* lexer) {
+static inline size_t parse_args(State& state, Lexer& lexer) {
     size_t argc = 0;
 
-    assert(lexer->peek().type == Lexer::Token::Type::LPAREN);
-    lexer->next();
+    assert(lexer.peek().type == Lexer::Token::Type::LPAREN);
+    lexer.next();
 
-    if (lexer->peek().type != Lexer::Token::Type::RPAREN) {
+    if (lexer.peek().type != Lexer::Token::Type::RPAREN) {
         parse_expr(state, lexer);
         ++argc;
 
-        while (lexer->peek().type != Lexer::Token::Type::RPAREN) {
-            lexer->match(Lexer::Token::Type::COMMA);
+        while (lexer.peek().type != Lexer::Token::Type::RPAREN) {
+            lexer.match(Lexer::Token::Type::COMMA);
             parse_expr(state, lexer);
             ++argc;
         }
     }
 
-    lexer->next(); // discard ')'
+    lexer.next(); // discard ')'
     return argc;
 }
 
