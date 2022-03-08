@@ -1,6 +1,8 @@
 #ifndef TYPESMAP_HPP
 #define TYPESMAP_HPP
 
+#include <cassert>
+
 #include "arrays.hpp"
 
 template<typename T>
@@ -9,7 +11,6 @@ using Type = kauno::Type;
 
 namespace kauno {
 
-// FIXME: Probably breaks for zero arity:
 class TypesMap {
     size_t arity_;
     size_t count_;
@@ -30,20 +31,23 @@ class TypesMap {
         return hash;
     }
 
-    KeyState probe_at(size_t ki, ORef<Type> const* types) const {
-        size_t const limit = ki + arity_;
-        for (; ki < limit; ++ki, ++types) {
-            if (types->data()) {
-                if (keys_.data()->elements[ki] != *types) {
-                    return INEQUAL;
+    static KeyState probe_at(size_t arity, size_t count, ORef<Type> const* keys, ORef<Type> const* types) {
+        if (arity > 0) {
+            for (size_t i = 0; i < arity; ++i, ++keys, ++types) {
+                if (types->data()) {
+                    if (*keys != *types) {
+                        return INEQUAL;
+                    }
+                } else {
+                    return ABSENT;
                 }
-            } else {
-                return ABSENT;
+
             }
 
+            return EQUAL;
+        } else {
+            return count > 0 ? EQUAL : ABSENT;
         }
-
-        return EQUAL;
     }
 
     void rehash(State& state) {
@@ -63,12 +67,14 @@ class TypesMap {
 
                 size_t const max_index = new_capacity - 1;
                 for (size_t collisions = 0, j = hash & max_index;; ++collisions, j = (j + collisions) & max_index) {
-                    size_t const kj = arity_ * j;
+                    ORef<Type>* key = &new_keys.data()->elements[arity_ * j];
 
-                    if (!new_keys.data()->elements[kj].data()) {
-                        memcpy(&new_keys.data()->elements[kj], types, sizeof(ORef<Type>) * arity_);
+                    if (probe_at(arity_, count_, key, types) == ABSENT) {
+                        memcpy(key, types, sizeof(ORef<Type>) * arity_);
                         new_values.data()->elements[j] = value;
+                        break;
                     }
+                    // else INEQUAL, EQUAL is impossible when rehashing
                 }
             }
         }
@@ -105,9 +111,9 @@ public:
 
         size_t const max_index = capacity() - 1;
         for (size_t collisions = 0, i = hash & max_index;; ++collisions, i = (i + collisions) & max_index) {
-            size_t const ki = arity_ * i;
+            ORef<Type> const* key = &keys_.data()->elements[arity_ * i];
 
-            switch (probe_at(ki, types)) {
+            switch (probe_at(arity_, count_, key, types)) {
             case EQUAL: return optional(values_.data()->elements[i]);
             case ABSENT: return optional<ORef<void>>();
             case INEQUAL: {}
@@ -122,19 +128,19 @@ public:
         size_t const cap = capacity();
         size_t const max_index = cap - 1;
         for (size_t collisions = 0, i = hash & max_index;; ++collisions, i = (i + collisions) & max_index) {
-            size_t const ki = arity_ * i;
+            ORef<Type>* key = &keys_.data()->elements[arity_ * i];
 
-            switch (probe_at(ki, types)) {
+            switch (probe_at(arity_, count_, key, types)) {
             case ABSENT: {
                 if ((count_ + 1) * 2 > cap) { // New load factor > 0.5
                     rehash(state);
                     goto recur; // `i` & `ki` were invalidated by rehash
                 }
-                // Else fall through to:
+                ++count_;
+                // Intentional fallthrough:
             }
             case EQUAL: {
-                ++count_;
-                memcpy(&keys_.data()->elements[ki], types, sizeof(ORef<Type>) * arity_);
+                memcpy(key, types, sizeof(ORef<Type>) * arity_);
                 values_.data()->elements[i] = value.oref();
                 return;
             }
