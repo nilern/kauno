@@ -58,6 +58,24 @@ public:
 };
 
 template<typename T>
+class NRef {
+    T* ptr_;
+
+public:
+    NRef() : ptr_(nullptr) {}
+
+    explicit NRef(T* ptr) : ptr_(ptr) {}
+
+    explicit NRef(ORef<T> oref) : ptr_(oref.data()) {}
+
+    bool has_value() const { return ptr_ != nullptr; }
+
+    optional<ORef<T>> data() const { return ptr_ ? optional(ORef(ptr_)) : optional<ORef<T>>(); }
+
+    T* ptr() const { return ptr_; }
+};
+
+template<typename T>
 class Handle {
     ORef<T>* oref_ptr_;
 
@@ -89,12 +107,12 @@ public:
 };
 
 struct Field {
-    ORef<Type> type;
+    NRef<Type> type;
     size_t offset;
     size_t size;
     bool inlined;
 
-    Field(ORef<Type> type_, size_t offset_);
+    Field(NRef<Type> type_, size_t offset_);
 };
 
 struct Type {
@@ -127,14 +145,14 @@ public:
     }
 };
 
-Field::Field(ORef<Type> type_, size_t offset_)
+Field::Field(NRef<Type> type_, size_t offset_)
     : type(type_), offset(offset_),
       size(0), inlined(false)
 {
-    Type* const t = type_.data();
-    if (t) {
-        size = t->min_size;
-        inlined = t->inlineable;
+    optional<ORef<Type>> const t = type_.data();
+    if (t.has_value()) {
+        size = t->data()->min_size;
+        inlined = t->data()->inlineable;
     }
 }
 

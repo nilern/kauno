@@ -48,6 +48,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     Closure(ORef<struct Type>(nullptr)),
     NoneType(ORef<struct Type>(nullptr)),
     RefArray(ORef<struct Type>(nullptr)),
+    NRefArray(ORef<struct Type>(nullptr)),
     TypesMap(ORef<struct Type>(nullptr)),
     Locals(ORef<struct Type>(nullptr)),
 
@@ -65,7 +66,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     size_t const Field_size = sizeof(struct Type) + Field_fields_count*sizeof(Field);
     struct Type* const tmp_Field = (struct Type*)malloc(Field_size);
     *tmp_Field = Type::create_record(*this, alignof(struct Field), sizeof(struct Field), true, Field_fields_count);
-    tmp_Type->fields[5] = (struct Field){ORef(tmp_Field), offsetof(struct Type, fields)};
+    tmp_Type->fields[5] = (struct Field){NRef(tmp_Field), offsetof(struct Type, fields)};
 
 
     Type = ORef((struct Type*)heap.alloc_indexed(tmp_Type, Type_fields_count));
@@ -85,17 +86,17 @@ State::State(size_t heap_size, size_t stack_size_) :
     *Bool.data() = Type::create_bits(*this, alignof(bool), sizeof(bool), true);
 
 
-    Type.data()->fields[0] = (struct Field){USize, offsetof(struct Type, align)};
-    Type.data()->fields[1] = (struct Field){USize, offsetof(struct Type, min_size)};
-    Type.data()->fields[2] = (struct Field){Bool, offsetof(struct Type, inlineable)};
-    Type.data()->fields[3] = (struct Field){Bool, offsetof(struct Type, is_bits)};
-    Type.data()->fields[4] = (struct Field){Bool, offsetof(struct Type, has_indexed)};
-    Type.data()->fields[5] = (struct Field){Field, offsetof(struct Type, fields)};
+    Type.data()->fields[0] = (struct Field){NRef(USize), offsetof(struct Type, align)};
+    Type.data()->fields[1] = (struct Field){NRef(USize), offsetof(struct Type, min_size)};
+    Type.data()->fields[2] = (struct Field){NRef(Bool), offsetof(struct Type, inlineable)};
+    Type.data()->fields[3] = (struct Field){NRef(Bool), offsetof(struct Type, is_bits)};
+    Type.data()->fields[4] = (struct Field){NRef(Bool), offsetof(struct Type, has_indexed)};
+    Type.data()->fields[5] = (struct Field){NRef(Field), offsetof(struct Type, fields)};
 
-    Field.data()->fields[0] = (struct Field){Type, offsetof(struct Field, type)};
-    Field.data()->fields[1] = (struct Field){USize, offsetof(struct Field, offset)};
-    Field.data()->fields[2] = (struct Field){USize, offsetof(struct Field, size)};
-    Field.data()->fields[3] = (struct Field){Bool, offsetof(struct Field, inlined)};
+    Field.data()->fields[0] = (struct Field){NRef(Type), offsetof(struct Field, type)};
+    Field.data()->fields[1] = (struct Field){NRef(USize), offsetof(struct Field, offset)};
+    Field.data()->fields[2] = (struct Field){NRef(USize), offsetof(struct Field, size)};
+    Field.data()->fields[3] = (struct Field){NRef(Bool), offsetof(struct Field, inlined)};
 
 
     free(tmp_Type);
@@ -111,19 +112,19 @@ State::State(size_t heap_size, size_t stack_size_) :
     size_t const Symbol_fields_count = 2;
     Symbol = ORef((struct Type*)heap.alloc_indexed(Type.data(), Symbol_fields_count));
     *Symbol.data() = Type::create_indexed(*this, alignof(struct Symbol), sizeof(struct Symbol), Symbol_fields_count);
-    Symbol.data()->fields[0] = (struct Field){ORef(USize), offsetof(struct Symbol, hash)};
-    Symbol.data()->fields[1] = (struct Field){ORef(UInt8), offsetof(struct Symbol, name)};
+    Symbol.data()->fields[0] = (struct Field){NRef(USize), offsetof(struct Symbol, hash)};
+    Symbol.data()->fields[1] = (struct Field){NRef(UInt8), offsetof(struct Symbol, name)};
 
     size_t const Var_fields_count = 1;
     Var = ORef((struct Type*)heap.alloc_indexed(Type.data(), Var_fields_count));
     *Var.data() = Type::create_record(*this, alignof(struct Var), sizeof(struct Var), false, Var_fields_count);
-    Var.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr), offsetof(struct Var, value)};
+    Var.data()->fields[0] = (struct Field){NRef<struct Type>(), offsetof(struct Var, value)};
 
     size_t const Call_fields_count = 2;
     Call = ORef((struct Type*)heap.alloc_indexed(Type.data(), Call_fields_count));
     *Call.data() = Type::create_indexed(*this, alignof(kauno::ast::Call), sizeof(kauno::ast::Call), Call_fields_count);
-    Call.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr), offsetof(kauno::ast::Call, callee)};
-    Call.data()->fields[1] = (struct Field){ORef<struct Type>(nullptr), offsetof(kauno::ast::Call, args)};
+    Call.data()->fields[0] = (struct Field){NRef<struct Type>(), offsetof(kauno::ast::Call, callee)};
+    Call.data()->fields[1] = (struct Field){NRef<struct Type>(), offsetof(kauno::ast::Call, args)};
 
     CodePtr = ORef((struct Type*)heap.alloc_indexed(Type.data(), 0));
     *CodePtr.data() = Type::create_bits(*this, alignof(kauno::fn::CodePtr), sizeof(kauno::fn::CodePtr), true);
@@ -131,7 +132,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     size_t const Fn_fields_count = 1;
     Fn = ORef((struct Type*)heap.alloc_indexed(Type.data(), Fn_fields_count));
     *Fn.data() = Type::create_record(*this, alignof(kauno::fn::Fn), sizeof(kauno::fn::Fn), true, Fn_fields_count);
-    Fn.data()->fields[0] = (struct Field){CodePtr, offsetof(kauno::fn::Fn, code)};
+    Fn.data()->fields[0] = (struct Field){NRef(CodePtr), offsetof(kauno::fn::Fn, code)};
 
     size_t const None_fields_count = 0;
     NoneType = ORef((struct Type*)heap.alloc_indexed(Type.data(), None_fields_count));
@@ -141,8 +142,15 @@ State::State(size_t heap_size, size_t stack_size_) :
     RefArray = ORef((struct Type*)heap.alloc_indexed(Type.data(), RefArray_fields_count));
     *RefArray.data() = Type::create_indexed(*this, alignof(kauno::arrays::RefArray<ORef<void>>), sizeof(kauno::arrays::RefArray<ORef<void>>),
                                             RefArray_fields_count);
-    RefArray.data()->fields[0] = (struct Field){ORef<struct Type>(nullptr),
+    RefArray.data()->fields[0] = (struct Field){NRef<struct Type>(),
             offsetof(kauno::arrays::RefArray<ORef<void>>, elements)};
+
+    size_t const NRefArray_fields_count = 1;
+    NRefArray = ORef((struct Type*)heap.alloc_indexed(Type.data(), NRefArray_fields_count));
+    *NRefArray.data() = Type::create_indexed(*this, alignof(kauno::arrays::NRefArray<ORef<void>>), sizeof(kauno::arrays::NRefArray<ORef<void>>),
+                                             NRefArray_fields_count);
+    NRefArray.data()->fields[0] = (struct Field){NRef<struct Type>(),
+            offsetof(kauno::arrays::NRefArray<ORef<void>>, elements)};
 
     TypesMap = kauno::TypesMap::create_reified(*this);
 

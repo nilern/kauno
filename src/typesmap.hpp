@@ -6,7 +6,7 @@
 #include "arrays.hpp"
 
 template<typename T>
-using RefArray = kauno::arrays::RefArray<T>;
+using NRefArray = kauno::arrays::NRefArray<T>;
 using Type = kauno::Type;
 
 namespace kauno {
@@ -14,8 +14,8 @@ namespace kauno {
 class TypesMap {
     size_t arity_;
     size_t count_;
-    ORef<RefArray<Type>> keys_;
-    ORef<RefArray<void>> values_;
+    ORef<NRefArray<Type>> keys_;
+    ORef<NRefArray<void>> values_;
 
     enum KeyState {EQUAL, INEQUAL, ABSENT};
 
@@ -31,11 +31,12 @@ class TypesMap {
         return hash;
     }
 
-    static KeyState probe_at(size_t arity, size_t count, ORef<Type> const* keys, ORef<Type> const* types) {
+    static KeyState probe_at(size_t arity, size_t count, NRef<Type> const* keys, ORef<Type> const* types) {
         if (arity > 0) {
             for (size_t i = 0; i < arity; ++i, ++keys, ++types) {
-                if (types->data()) {
-                    if (*keys != *types) {
+                optional<ORef<Type>> const key = keys->data();
+                if (key.has_value()) {
+                    if (*key != *types) {
                         return INEQUAL;
                     }
                 } else {
@@ -54,23 +55,23 @@ class TypesMap {
         size_t const cap = capacity();
         size_t const new_capacity = cap * 2;
 
-        ORef<RefArray<Type>> const new_keys = RefArray<Type>::create(state, arity_ * new_capacity);
-        ORef<RefArray<void>> const new_values = RefArray<void>::create(state, new_capacity);
+        ORef<NRefArray<Type>> const new_keys = NRefArray<Type>::create(state, arity_ * new_capacity);
+        ORef<NRefArray<void>> const new_values = NRefArray<void>::create(state, new_capacity);
 
         for (size_t i = 0; i < cap; ++i) {
             size_t const ki = arity_ * i;
 
-            ORef<void> const value = values_.data()->elements[i];
-            if (value.data()) {
-                ORef<Type> const* const types = &keys_.data()->elements[ki];
+            NRef<void> const value = values_.data()->elements[i];
+            if (value.has_value()) {
+                ORef<Type> const* const types = (ORef<Type>*)(&keys_.data()->elements[ki]); // HACK: cast
                 size_t const hash = hash_types(types);
 
                 size_t const max_index = new_capacity - 1;
                 for (size_t collisions = 0, j = hash & max_index;; ++collisions, j = (j + collisions) & max_index) {
-                    ORef<Type>* key = &new_keys.data()->elements[arity_ * j];
+                    NRef<Type>* key = &new_keys.data()->elements[arity_ * j];
 
                     if (probe_at(arity_, count_, key, types) == ABSENT) {
-                        memcpy(key, types, sizeof(ORef<Type>) * arity_);
+                        memcpy((ORef<Type>*)key, types, sizeof(ORef<Type>) * arity_);
                         new_values.data()->elements[j] = value;
                         break;
                     }
@@ -89,10 +90,10 @@ public:
 
         Type* type = static_cast<Type*>(state.alloc_indexed(state.Type.data(), fields_count));
         *type = Type::create_record(state, alignof(TypesMap), sizeof(TypesMap), false /* `count_` is mutable */, fields_count);
-        type->fields[0] = Field(state.USize, offsetof(TypesMap, arity_));
-        type->fields[1] = Field(state.USize, offsetof(TypesMap, count_));
-        type->fields[2] = Field(state.RefArray, offsetof(TypesMap, keys_));
-        type->fields[3] = Field(state.RefArray, offsetof(TypesMap, values_));
+        type->fields[0] = Field(NRef(state.USize), offsetof(TypesMap, arity_));
+        type->fields[1] = Field(NRef(state.USize), offsetof(TypesMap, count_));
+        type->fields[2] = Field(NRef(state.RefArray), offsetof(TypesMap, keys_));
+        type->fields[3] = Field(NRef(state.RefArray), offsetof(TypesMap, values_));
 
         return ORef(type);
     }
@@ -102,8 +103,8 @@ public:
     TypesMap(State& state, size_t arity) :
         arity_(arity),
         count_(0),
-        keys_(RefArray<Type>::create(state, arity * 2)),
-        values_(RefArray<void>::create(state, 2))
+        keys_(NRefArray<Type>::create(state, arity * 2)),
+        values_(NRefArray<void>::create(state, 2))
     {}
 
     optional<ORef<void>> get(ORef<Type> const* types) const {
@@ -111,10 +112,10 @@ public:
 
         size_t const max_index = capacity() - 1;
         for (size_t collisions = 0, i = hash & max_index;; ++collisions, i = (i + collisions) & max_index) {
-            ORef<Type> const* key = &keys_.data()->elements[arity_ * i];
+            NRef<Type> const* key = &keys_.data()->elements[arity_ * i];
 
             switch (probe_at(arity_, count_, key, types)) {
-            case EQUAL: return optional(values_.data()->elements[i]);
+            case EQUAL: return optional(ORef(values_.data()->elements[i].ptr()));
             case ABSENT: return optional<ORef<void>>();
             case INEQUAL: {}
             }
@@ -128,7 +129,7 @@ public:
         size_t const cap = capacity();
         size_t const max_index = cap - 1;
         for (size_t collisions = 0, i = hash & max_index;; ++collisions, i = (i + collisions) & max_index) {
-            ORef<Type>* key = &keys_.data()->elements[arity_ * i];
+            NRef<Type>* key = &keys_.data()->elements[arity_ * i];
 
             switch (probe_at(arity_, count_, key, types)) {
             case ABSENT: {
@@ -140,8 +141,8 @@ public:
                 // Intentional fallthrough:
             }
             case EQUAL: {
-                memcpy(key, types, sizeof(ORef<Type>) * arity_);
-                values_.data()->elements[i] = value.oref();
+                memcpy((ORef<Type>*)key, types, sizeof(ORef<Type>) * arity_);
+                values_.data()->elements[i] = NRef(value.oref());
                 return;
             }
             case INEQUAL: {}

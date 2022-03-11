@@ -39,12 +39,12 @@ void* Heap::alloc(Type* type) {
 
 void* Heap::alloc_indexed(Type* type, size_t indexed_count) {
     // TODO: Sanity checks:
-    Type* const elem_type = type->fields[type->fields_count - 1].type.data();
+    optional<ORef<Type>> const elem_type = type->fields[type->fields_count - 1].type.data();
     size_t elem_align = alignof(ORef<void>);
     size_t elem_size = sizeof(ORef<void>);
-    if (elem_type) {
-        elem_align = elem_type->align > alignof(size_t) ? elem_type->align : alignof(size_t);
-        elem_size = elem_type->min_size;
+    if (elem_type.has_value()) {
+        elem_align = elem_type->data()->align > alignof(size_t) ? elem_type->data()->align : alignof(size_t);
+        elem_size = elem_type->data()->min_size;
     }
 
     // Compute alignment:
@@ -79,7 +79,7 @@ static inline ORef<T> mark(Heap*, ORef<T> obj) {
     return obj;
 }
 
-static inline char* scan_field(Heap* heap, ORef<Type> field_type, char* data);
+static inline char* scan_field(Heap* heap, NRef<Type> field_type, char* data);
 
 // Returns the address immediately after the object data.
 static inline char* scan_fields(Heap* heap, Type* type, char* data) {
@@ -99,8 +99,10 @@ static inline char* scan_fields(Heap* heap, Type* type, char* data) {
             }
 
             // Elements of indexed field:
-            ORef const indexed_type = type->fields[lasti].type;
-            size_t const indexed_elem_size = indexed_type.data()->min_size;
+            NRef<Type> const indexed_type = type->fields[lasti].type;
+            size_t const indexed_elem_size = indexed_type.has_value() ?
+                        indexed_type.ptr()->min_size
+                      : sizeof(ORef<void>);
             size_t* const indexed_data = (size_t*)(data + type->fields[lasti].offset);
             size_t const indexed_count = *indexed_data;
             char* indexed_fields = (char*)(indexed_data + 1);
@@ -117,11 +119,11 @@ static inline char* scan_fields(Heap* heap, Type* type, char* data) {
 }
 
 // Returns the address immediately after the field data.
-static inline char* scan_field(Heap* heap, ORef<Type> field_type, char* field) {
-    Type* const type = field_type.data();
-    if (type->inlineable) {
+static inline char* scan_field(Heap* heap, NRef<Type> field_type, char* field) {
+    optional<ORef<Type>> const type = field_type.data();
+    if (type.has_value() && type->data()->inlineable) {
         // Scan inlined fields:
-        return scan_fields(heap, type, field);
+        return scan_fields(heap, type->data(), field);
     } else {
         // Mark field:
         ORef<void>* const oref = (ORef<void>*)field;

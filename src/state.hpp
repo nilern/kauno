@@ -43,6 +43,7 @@ public:
     ORef<struct Type> Closure;
     ORef<struct Type> NoneType;
     ORef<struct Type> RefArray;
+    ORef<struct Type> NRefArray;
     ORef<struct Type> TypesMap;
     ORef<struct Type> Locals;
 
@@ -115,7 +116,7 @@ ORef<F> obj_field(State& state, Handle<T> handle, size_t index) {
     Field const field = type->fields[index];
 
     if (field.inlined) {
-        F* const field_obj = state.alloc(field.type.data());
+        F* const field_obj = state.alloc(field.type.ptr());
         obj = Handle_oref(handle); // Reload after potential collection
         memcpy(field_obj, (void*)((char*)obj_data(obj) + field.offset), field.size);
         return ORef(field_obj);

@@ -30,8 +30,8 @@ struct Closure {
 
         Type* type = static_cast<struct Type*>(state.alloc_indexed(state.Type.data(), fields_count));
         *type = Type::create_record(state, alignof(Closure), sizeof(Closure), true, fields_count);
-        type->fields[0] = (struct Field){state.AstFn, offsetof(Closure, code)};
-        type->fields[1] = (struct Field){ORef<struct Type>(nullptr), offsetof(Closure, env)};
+        type->fields[0] = (struct Field){NRef(state.AstFn), offsetof(Closure, code)};
+        type->fields[1] = (struct Field){NRef<struct Type>(), offsetof(Closure, env)};
 
         return ORef(type);
     }

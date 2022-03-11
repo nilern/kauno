@@ -9,9 +9,9 @@ ORef<Type> Fn::create_reified(State& state) {
 
     Type* type = static_cast<Type*>(state.alloc_indexed(state.Type.data(), fields_count));
     *type = Type::create_indexed(state, alignof(Fn), sizeof(Fn), fields_count);
-    type->fields[0] = (struct Field){state.RefArray, offsetof(Fn, domain)};
-    type->fields[1] = (struct Field){ORef<struct Type>(nullptr), offsetof(Fn, body)};
-    type->fields[2] = (struct Field){state.Symbol, offsetof(Fn, params)};
+    type->fields[0] = (struct Field){NRef(state.RefArray), offsetof(Fn, domain)};
+    type->fields[1] = (struct Field){NRef<struct Type>(), offsetof(Fn, body)};
+    type->fields[2] = (struct Field){NRef(state.Symbol), offsetof(Fn, params)};
 
     return ORef(type);
 }

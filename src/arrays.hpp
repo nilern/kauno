@@ -17,6 +17,16 @@ struct RefArray {
     }
 };
 
+template<typename T>
+struct NRefArray {
+    size_t count;
+    NRef<T> elements[0];
+
+    static ORef<NRefArray<T>> create(State& state, size_t count) {
+        return ORef(static_cast<NRefArray<T>*>(state.alloc_indexed(state.NRefArray.data(), count)));
+    }
+};
+
 }
 
 #endif // ARRAYS_HPP
