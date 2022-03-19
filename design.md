@@ -11,14 +11,12 @@ Dynamically typed functional-first language with
 * Multimethods with
     - Type parameters (`pure{Option}()`) (CLOS (eql specializers), Julia (`Type{Int}`))
     - Templated methods (`forall T . get(v : Array{T}, i : USize)`) (Julia)
-* Dynamic type classes (built on top of multimethods)
 * Types with
     - Both composite and bits types (Julia)
     - Access-controllable (via modules) constructors and field accessors (Scheme)
-    - Data inlining (Project Valhalla)
+    - Data inlining, including stack allocation (Project Valhalla)
     - Optional indexed final field (C flexible struct member)
-* Multiple (return) values (Scheme, Lua)
-* Extensible effects / delimited continuations (Racket)
+* Extensible effects / delimited continuations / full coroutines (Racket, Lua)
 * Hygienic macros (Scheme)
 
 no
@@ -33,6 +31,7 @@ no
 * Forward declarations (archaic and annoying)
 * Importing everything in a module (hard to follow for both programmers and compilers)
 * Subtyping and overriding
+* Multiple (return) values (unnecessary since tuples can be stack allocated)
 
 ## Implementation Overview
 
