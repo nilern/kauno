@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <cassert>
-#include <algorithm>
 
 #include "ast.hpp"
 #include "state.hpp"
@@ -12,13 +11,13 @@
 namespace kauno {
 
 static inline void parse_param(State& state, Lexer& lexer);
-static inline Handle<void> parse_call(State& state, Lexer& lexer);
-static inline Handle<void> parse_callee(State& state, Lexer& lexer);
+static inline AnySRef parse_call(State& state, Lexer& lexer);
+static inline AnySRef parse_callee(State& state, Lexer& lexer);
 static inline size_t parse_args(State& state, Lexer& lexer);
 
 // expr ::= 'fn' '(' (param (',' param)*)? ')' '->' expr
 //        | call
-static inline Handle<void> parse_expr(State& state, Lexer& lexer) {
+static inline AnySRef parse_expr(State& state, Lexer& lexer) {
     if (lexer.peek().type == Lexer::Token::Type::FN) {
         lexer.next();
 
@@ -35,27 +34,29 @@ static inline Handle<void> parse_expr(State& state, Lexer& lexer) {
                 ++arity;
             }
         }
-        ORef<Symbol>* const params = (ORef<Symbol>*)(state.peekn(arity));
+        DynRef* const params = state.peekn(arity);
 
         lexer.next(); // discard ')'
 
         lexer.match(Lexer::Token::Type::ARROW);
 
-        Handle<void> const body = parse_expr(state, lexer);
+        AnySRef const body = parse_expr(state, lexer);
 
-        Handle<kauno::arrays::RefArray<void>> domain = state.push(kauno::arrays::RefArray<void>::create(state, arity));
+        Handle<kauno::arrays::RefArray<void>> domain =
+                state.push_outlined(kauno::arrays::RefArray<void>::create(state, arity));
 
+        ORef<void> const heap_body = body.to_heap(state);
         kauno::ast::Fn* fn = static_cast<kauno::ast::Fn*>(state.alloc_indexed(state.AstFn.data(), arity));
         *fn = (kauno::ast::Fn){
             .domain = domain.oref(),
-            .body = body.oref(),
+            .body = heap_body,
             .arity = arity,
             .params = {}
         };
 
         for (size_t i = 0; i < arity; ++i) {
             domain.data()->elements[i] = state.None.as_void();
-            fn->params[i] = params[i];
+            fn->params[i] = params[i].unchecked_oref().unchecked_cast<Symbol>();
         }
 
         state.popn(arity + 2); // params & body & domain
@@ -66,23 +67,27 @@ static inline Handle<void> parse_expr(State& state, Lexer& lexer) {
 }
 
 // call ::= callee args?
-static inline Handle<void> parse_call(State& state, Lexer& lexer) {
-    Handle<void> const callee = parse_callee(state, lexer);
+static inline AnySRef parse_call(State& state, Lexer& lexer) {
+    AnySRef const callee = parse_callee(state, lexer);
 
     if (lexer.peek().type == Lexer::Token::Type::LPAREN) {
         size_t const argc = parse_args(state, lexer);
 
-        kauno::ast::Call* const call = (kauno::ast::Call*)state.alloc_indexed(state.Call.data(), argc);
-        *call = (kauno::ast::Call){
-            .callee = callee.oref(),
+        Handle<void> const heap_callee = state.push_outlined(callee.to_heap(state));
+        Handle<kauno::ast::Call> const call =
+                state.push_outlined(ORef(static_cast<kauno::ast::Call*>(state.alloc_indexed(state.Call.data(), argc))));
+        *call.data() = (kauno::ast::Call){
+            .callee = heap_callee.oref(),
             .args_count = argc,
             .args = {}
         };
-        ORef<void>* const args = state.peekn(argc);
-        std::copy(args, args + argc, &call->args[0]);
+        DynRef* const args = state.peekn(argc + 2);
+        for (size_t i = 0; i < argc; ++i) {
+            call.data()->args[i] = args[i].to_heap(state);
+        }
 
-        state.popn(argc + 1);
-        return state.push(ORef(call)).template unchecked_cast<void>();
+        state.popn_nth(argc + 2, argc + 2); // callee & args & callee
+        return state.peek(); // call as `AnySRef`
     } else {
         return callee;
     }
@@ -101,13 +106,13 @@ static inline void parse_param(State& state, Lexer& lexer) {
 }
 
 // callee ::= '(' expr ')' | VAR | INT
-static inline Handle<void> parse_callee(State& state, Lexer& lexer) {
+static inline AnySRef parse_callee(State& state, Lexer& lexer) {
     Lexer::Token const tok = lexer.peek();
 
     switch (tok.type) {
     case Lexer::Token::Type::LPAREN: {
         lexer.next();
-        Handle<void> const expr = parse_expr(state, lexer);
+        AnySRef const expr = parse_expr(state, lexer);
         lexer.match(Lexer::Token::Type::RPAREN);
         return expr;
     }
@@ -115,7 +120,8 @@ static inline Handle<void> parse_callee(State& state, Lexer& lexer) {
     case Lexer::Token::Type::VAR: {
         lexer.next();
 
-        return Symbol_new(state, tok.chars, tok.len).template unchecked_cast<void>();
+        Symbol_new(state, tok.chars, tok.len);
+        return state.peek(); // symbol as `AnySRef`
     }
 
     case Lexer::Token::Type::INT: {
@@ -129,9 +135,9 @@ static inline Handle<void> parse_callee(State& state, Lexer& lexer) {
             n = 10*n + (tok.chars[i] - '0');
         }
 
-        int64_t* data = (int64_t*)state.alloc(state.Int64.data());
-        *data = n;
-        return state.push(ORef(data)).unchecked_cast<void>();
+        SRef<int64_t> const data = state.stack_alloc<int64_t>(state.Int64);
+        *data.data() = n;
+        return state.peek(); // The int as `AnySRef`
     }
 
     case Lexer::Token::Type::ARROW:

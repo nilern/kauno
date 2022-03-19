@@ -6,7 +6,7 @@
 
 namespace kauno {
 
-static inline Handle<void> eval(State& state, ORef<void> oenv, ORef<void> oexpr) {
+static inline AnySRef eval(State& state, ORef<void> oenv, ORef<void> oexpr) {
     while (true) {
         optional<ORef<Symbol>> const opt_symbol = oexpr.try_cast<Symbol>(state);
         if (opt_symbol.has_value()) {
@@ -32,8 +32,8 @@ static inline Handle<void> eval(State& state, ORef<void> oenv, ORef<void> oexpr)
 
         optional<ORef<ast::Call>> const opt_call = oexpr.try_cast<ast::Call>(state);
         if (opt_call.has_value()) {
-            Handle<void> const env = state.push(oenv);
-            Handle<ast::Call> const call = state.push(*opt_call);
+            Handle<void> const env = state.push_outlined(oenv);
+            Handle<ast::Call> const call = state.push_outlined(*opt_call);
 
             eval(state, env.oref(), call.data()->callee);
 
@@ -44,9 +44,9 @@ static inline Handle<void> eval(State& state, ORef<void> oenv, ORef<void> oexpr)
 
             state.pop_nth(1 + argc); // Pop `call`
 
-            Handle<void> const callee = state.peek_nth(argc);
+            AnySRef const callee = state.peek_nth(argc);
 
-            optional<Handle<fn::Fn>> const opt_fn = callee.try_cast<fn::Fn>(state);
+            optional<Handle<fn::Fn>> const opt_fn = callee.try_handle<fn::Fn>();
             if (opt_fn.has_value()) {
                 Handle<fn::Fn> fn = *opt_fn;
 
@@ -55,7 +55,7 @@ static inline Handle<void> eval(State& state, ORef<void> oenv, ORef<void> oexpr)
                 }
 
                 {
-                    ORef<void>* arg = state.peekn(argc);
+                    DynRef* arg = state.peekn(argc);
                     for (size_t i = 0; i < argc; ++i, ++arg) {
                         ORef<void> const param_ann = fn.data()->domain[i];
 
@@ -71,15 +71,15 @@ static inline Handle<void> eval(State& state, ORef<void> oenv, ORef<void> oexpr)
                 }
 
                 state.pop_nth(1 + argc); // env
-                fn = state.peek_nth(argc).unchecked_cast<fn::Fn>();
+                fn = state.peek_nth(argc).unchecked_handle<fn::Fn>();
                 return fn.data()->code(state);
             }
 
-            optional<Handle<fn::Closure>> const opt_closure = callee.try_cast<fn::Closure>(state);
+            optional<SRef<fn::Closure>> const opt_closure = callee.try_sref<fn::Closure>();
             if (opt_closure.has_value()) {
-                Handle<fn::Closure> const closure = *opt_closure;
+                SRef<fn::Closure> const closure = *opt_closure;
 
-                Handle<ast::Fn> const code = state.push(closure.data()->code);
+                Handle<ast::Fn> const code = state.push_outlined(closure.data()->code);
 
                 if (argc != code.data()->arity) {
                     exit(EXIT_FAILURE); // FIXME
@@ -88,7 +88,7 @@ static inline Handle<void> eval(State& state, ORef<void> oenv, ORef<void> oexpr)
                 {
                     ORef<arrays::RefArray<void>> const domain = code.data()->domain;
 
-                    ORef<void>* arg = state.peekn(argc + 1);
+                    DynRef* arg = state.peekn(argc + 1);
                     for (size_t i = 0; i < argc; ++i, ++arg) {
                         ORef<void> const param_ann = domain.data()->elements[i];
 
@@ -103,13 +103,13 @@ static inline Handle<void> eval(State& state, ORef<void> oenv, ORef<void> oexpr)
                     }
                 }
 
-                Handle<void> const closure_env = state.push(closure.data()->env);
+                Handle<void> const closure_env = state.push_outlined(closure.data()->env);
                 ORef<Locals> const oenv_ = Locals::create(state, closure_env, argc).oref();
 
                 {
-                    ORef<void>* arg = state.peekn(argc + 3);
+                    DynRef* arg = state.peekn(argc + 3);
                     for (size_t i = 0; i < argc; ++i, ++arg) {
-                        oenv_.data()->insert(code.data()->params[i], *arg);
+                        oenv_.data()->insert(code.data()->params[i], arg->to_heap(state));
                     }
                 }
 
@@ -125,12 +125,8 @@ static inline Handle<void> eval(State& state, ORef<void> oenv, ORef<void> oexpr)
 
         optional<ORef<ast::Fn>> const opt_fn = oexpr.try_cast<ast::Fn>(state);
         if (opt_fn.has_value()) {
-            Handle<void> const env = state.push(oenv);
-            Handle<ast::Fn> const fn = state.push(*opt_fn);
-
-            fn::Closure::create(state, fn, env);
-            state.popn_nth(2, 2); // `env` & `fn`
-            return state.peek(); // the closure
+            fn::Closure::create(state, *opt_fn, oenv);
+            return state.peek(); // the closure as `AnySRef`
         }
 
         return state.push(oexpr);

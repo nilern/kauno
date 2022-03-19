@@ -48,7 +48,7 @@ struct Locals {
             .keys = {}
         };
 
-        return state.push(ORef(locals));
+        return state.push_outlined(ORef(locals));
     }
 
     // FIXME: Error on duplicates

@@ -4,6 +4,32 @@
 
 namespace kauno {
 
+void DynRef::repush(State& state) const {
+    optional<ORef<Type>> const opt_type = type_.data();
+    if (opt_type.has_value()) {
+        ORef<struct Type> const type = *opt_type;
+        SRef<void> const sref = state.stack_alloc<void>(type);
+        memmove(sref.data(), data(), type.data()->min_size);
+    } else {
+        state.push_outlined(unchecked_oref());
+    }
+}
+
+ORef<void> DynRef::to_heap(State& state) const {
+    optional<ORef<Type>> const opt_type = type_.data();
+    if (opt_type.has_value()) {
+        Type* const type = opt_type->data();
+        size_t const size = type->min_size;
+
+        void* const data = state.alloc(type);
+        memcpy(data, sptr_, size);
+
+        return ORef(data);
+    } else {
+        return unchecked_oref();
+    }
+}
+
 ORef<Type> Type::reify(State const& state) { return state.Type; }
 
 Type::Type(State& state,

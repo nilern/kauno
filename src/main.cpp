@@ -36,15 +36,15 @@ int main(int argc, char* argv[]) {
         puts("\n---\n");
 
         Lexer lexer(argv[1], strlen(argv[1]));
-        Handle<void> const expr = parse_expr(state, lexer);
+        AnySRef const expr = parse_expr(state, lexer);
         State_print_builtin(state, stdout, expr);
         puts("");
 
         puts("\n---\n");
 
-        ORef<void> oexpr = expr.oref();
+        ORef<void> oexpr = expr.to_heap(state);
         state.pop(); // `expr`
-        Handle<void> const value = eval(state, state.None.as_void(), oexpr);
+        AnySRef const value = eval(state, state.None.as_void(), oexpr);
         State_print_builtin(state, stdout, value);
         puts("");
 

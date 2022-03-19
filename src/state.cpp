@@ -14,7 +14,7 @@
 
 namespace kauno {
 
-static inline Handle<void> builtin_prn(State& state) {
+static inline AnySRef builtin_prn(State& state) {
     State_print_builtin(state, stdout, state.peek());
     puts("");
     state.pop_nth(1); // Pop self
@@ -25,7 +25,9 @@ State::State(size_t heap_size, size_t stack_size_) :
     heap(heap_size),
 
     stack_size(stack_size_),
-    stack((ORef<void>*)malloc(stack_size_)),
+    stack((char*)malloc(stack_size)),
+    data_sp(stack + stack_size),
+    type_sp((DynRef*)stack),
 
     type_hashes_(std::mt19937_64(std::random_device()())),
 
@@ -54,7 +56,9 @@ State::State(size_t heap_size, size_t stack_size_) :
 
     None(ORef<struct None>(nullptr))
 {
-    sp = stack;
+    // Sentinel to simplify (and optimize) popping:
+    *type_sp = DynRef((ORef<void>*)data_sp);
+    ++type_sp;
 
 
     size_t const Type_fields_count = 6;
@@ -163,7 +167,7 @@ State::State(size_t heap_size, size_t stack_size_) :
     None = ORef(static_cast<struct None*>(heap.alloc(NoneType.data())));
 
 
-    Handle<struct Type> const Type_handle = push(ORef(Type));
+    Handle<struct Type> const Type_handle = push_outlined(ORef(Type));
     Handle<struct Symbol> const Type_symbol = Symbol_new(*this, "Type", 4);
     Handle<struct Var> const Type_var = Var_new(*this, Type_handle.as_void());
     globals.insert(Type_symbol.oref(), Type_var.oref());
@@ -176,52 +180,58 @@ State::State(size_t heap_size, size_t stack_size_) :
         .domain = {}
     };
     prn.data()->domain[0] = None.as_void();
-    Handle<kauno::fn::Fn> const prn_handle = push(ORef(prn));
+    Handle<kauno::fn::Fn> const prn_handle = push_outlined(ORef(prn));
     Handle<struct Symbol> const prn_symbol = Symbol_new(*this, "prn", 3);
     Handle<struct Var> const prn_var = Var_new(*this, prn_handle.as_void());
     globals.insert(prn_symbol.oref(), prn_var.oref());
     popn(3);
 }
 
-Handle<void> State::peek() {
-    assert(sp > &stack[0]);
-    return Handle(sp - 1);
+AnySRef State::peek() {
+    assert((char*)type_sp > stack);
+
+    return AnySRef(type_sp - 1);
 }
 
-Handle<void> State::peek_nth(size_t n) {
-    assert(sp - n >= &stack[0]);
-    return Handle(sp - 1 - n);
+AnySRef State::peek_nth(size_t n) {
+    assert((char*)type_sp - n >= stack);
+
+    return AnySRef(type_sp - 1 - n);
 }
 
-ORef<void>* State::peekn(size_t n) {
-    assert(sp - n >= &stack[0]);
-    return sp - n;
-}
+DynRef* State::peekn(size_t n) {
+    assert((char*)type_sp - n >= stack);
 
-void State::pop() {
-    assert(sp > &stack[0]);
-    --sp;
+    return type_sp - n;
 }
 
 void State::popn(size_t n) {
-    assert(sp - n >= &stack[0]);
-    sp -= n;
+    assert((char*)(type_sp - n) > stack);
+
+    type_sp -= n;
+    data_sp = (char*)((type_sp - 1)->stack_ptr());
 }
 
-void State::pop_nth(size_t i) {
-    assert(sp - i >= &stack[0]);
-    memmove(sp - 1 - i, sp - i, sizeof(ORef<void>)*i);
-    --sp;
-}
+void State::pop() { popn(1); }
 
 void State::popn_nth(size_t i, size_t n) {
     assert(n <= i + 1);
-    assert(sp - i >= &stack[0]);
-    memmove(sp - 1 - i, sp - 1 - i + n, sizeof(ORef<void>)*(i + 1 - n));
-    sp -= n;
+    assert((char*)(type_sp - i) > stack);
+
+    size_t const top_count = i + 1 - n;
+    DynRef* it = type_sp - top_count;
+
+    type_sp -= i + 1;
+    data_sp = (char*)((type_sp - 1)->stack_ptr());
+
+    for (size_t j = 0; j < top_count; ++j, ++it) {
+        it->repush(*this);
+    }
 }
 
-static inline void State_print_builtin(State const& state, FILE* dest, Handle<void> value) {
+void State::pop_nth(size_t i) { popn_nth(i, 1); }
+
+static inline void State_print_builtin(State const& state, FILE* dest, AnySRef value) {
     ORef<Type> type = value.type();
     void* data = value.data();
     if (type == state.Type) {

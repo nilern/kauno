@@ -11,7 +11,7 @@ class State;
 
 namespace kauno::fn {
 
-typedef Handle<void> (*CodePtr)(State& state);
+typedef AnySRef (*CodePtr)(State& state);
 
 struct Fn {
     CodePtr code;
@@ -38,13 +38,13 @@ struct Closure {
 
     static ORef<Type> reify(State const& state) { return state.Closure; }
 
-    static Handle<Closure> create(State& state, Handle<kauno::ast::Fn> code, Handle<void> env) {
-        Closure* closure = static_cast<Closure*>(state.alloc(state.Closure.data()));
-        *closure = (Closure){
-            .code = code.oref(),
-            .env = env.oref()
+    static SRef<Closure> create(State& state, ORef<kauno::ast::Fn> code, ORef<void> env) {
+        SRef<Closure> closure = state.stack_alloc<Closure>(state.Closure);
+        *closure.data() = (Closure){
+            .code = code,
+            .env = env
         };
-        return state.push(ORef(closure));
+        return closure;
     }
 };
 

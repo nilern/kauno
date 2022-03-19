@@ -76,13 +76,13 @@ static inline Handle<Symbol> Symbol_new(State& state, char const* name, size_t n
                     ++symbols->count;
                     symbols->symbols[i] = symbol;
 
-                    return state.push(ORef(symbol));
+                    return state.push_outlined(ORef(symbol));
                 }
             } else if (isymbol->hash == hash
                        && isymbol->name_size == name_size
                        && strncmp(isymbol->name, name, name_size) == 0)
             {
-                return state.push(ORef(isymbol));
+                return state.push_outlined(ORef(isymbol));
             }
         }
     }
